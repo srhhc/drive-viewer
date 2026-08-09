@@ -61,6 +61,7 @@ const DataStore = {
             thumbnailLink: f.thumbnailLink || '',
             webViewLink: f.webViewLink || '',
             webContentLink: f.webContentLink || '',
+            path: f.path || '',
             folderName: folderName,
             // Derived properties
             extension: getFileExtension(f.name),
@@ -69,6 +70,40 @@ const DataStore = {
             dateFormatted: formatDate(f.modifiedTime),
             icon: getFileIcon(f.name, f.mimeType)
         }));
+    },
+
+    // Build a folder tree from file paths
+    // Returns: { name, path, fileCount, children: [...] }
+    buildFolderTree(files) {
+        const root = { name: 'הכל', path: '', fileCount: 0, children: {} };
+
+        for (const file of files) {
+            const parts = file.path ? file.path.split('/') : [];
+            let current = root;
+
+            // Count files at each level
+            for (let i = 0; i <= parts.length; i++) {
+                current.fileCount++;
+                if (i < parts.length) {
+                    const part = parts[i];
+                    const childPath = parts.slice(0, i + 1).join('/');
+                    if (!current.children[part]) {
+                        current.children[part] = { name: part, path: childPath, fileCount: 0, children: {} };
+                    }
+                    current = current.children[part];
+                }
+            }
+        }
+
+        // Convert children objects to sorted arrays
+        function toArray(node) {
+            const children = Object.values(node.children)
+                .map(toArray)
+                .sort((a, b) => a.name.localeCompare(b.name, 'he'));
+            return { name: node.name, path: node.path, fileCount: node.fileCount, children };
+        }
+
+        return toArray(root);
     },
 
     // Load all files from all folders (for search)

@@ -289,6 +289,11 @@ img { max-width: 100%; }
 .folder-tree::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 .folder-tree::-webkit-scrollbar-track { background: transparent; }
 
+.subfolder-tree {
+    border-right: 2px solid var(--border);
+    margin-right: 20px;
+}
+
 .tree-loading {
     display: flex;
     align-items: center;
@@ -299,7 +304,7 @@ img { max-width: 100%; }
     font-size: 0.9rem;
 }
 
-.tree-item {
+.tree-item, .tree-subitem {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -312,18 +317,18 @@ img { max-width: 100%; }
     user-select: none;
 }
 
-.tree-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+.tree-item:hover, .tree-subitem:hover { background: var(--bg-hover); color: var(--text-primary); }
 
-.tree-item.active {
+.tree-item.active, .tree-subitem.active {
     background: var(--accent-light);
     color: var(--accent);
     border-right-color: var(--accent);
     font-weight: 500;
 }
 
-.tree-item .folder-icon { font-size: 1.1rem; flex-shrink: 0; }
-.tree-item .folder-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tree-item .folder-badge {
+.tree-item .folder-icon, .tree-subitem .folder-icon { font-size: 1.1rem; flex-shrink: 0; }
+.tree-item .folder-name, .tree-subitem .folder-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tree-item .folder-badge, .tree-subitem .folder-badge {
     background: var(--bg-tertiary);
     color: var(--text-muted);
     padding: 1px 8px;
@@ -331,8 +336,7 @@ img { max-width: 100%; }
     font-size: 0.75rem;
     flex-shrink: 0;
 }
-
-.tree-item.active .folder-badge {
+.tree-item.active .folder-badge, .tree-subitem.active .folder-badge {
     background: var(--accent);
     color: white;
 }
@@ -625,6 +629,19 @@ img { max-width: 100%; }
 }
 
 .file-card-actions button:first-child { border-left: 1px solid var(--border-light); }
+
+/* File card path (subfolder indicator) */
+.file-card-path {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.file-card-path i { font-size: 0.65rem; }
 
 /* ============================================
    FILE LIST

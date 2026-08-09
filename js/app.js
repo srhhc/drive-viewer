@@ -4,19 +4,17 @@
    ============================================ */
 
 const App = {
-    // Search state
     searchQuery: '',
     isSearchMode: false,
+    currentPath: '',       // Current subfolder path (empty = root)
+    folderTree: null,      // Built folder tree from current files
 
     async init() {
-        // Initialize UI first
         UI.init();
         VideoPlayer.init();
 
-        // Show loading in sidebar
         UI.showState('loading');
 
-        // Load data index
         const success = await DataStore.init();
 
         if (!success) {
@@ -24,54 +22,85 @@ const App = {
             return;
         }
 
-        // Render folder tree
-        UI.renderFolderTree(null);
+        UI.renderFolderTree(null, null, '');
 
-        // Check for last viewed folder
         const lastFolder = localStorage.getItem(CONFIG.lastFolderKey);
         if (lastFolder && DataStore.folders.find(f => f.id === lastFolder)) {
             await this.selectFolder(lastFolder);
         } else if (DataStore.folders.length > 0) {
-            // Auto-select first folder
             await this.selectFolder(DataStore.folders[0].id);
         } else {
             UI.showState('welcome');
         }
     },
 
+    goHome() {
+        // Reset to root of current folder
+        if (DataStore.currentFolderId) {
+            this.currentPath = '';
+            this._refreshView();
+        } else if (DataStore.folders.length > 0) {
+            this.selectFolder(DataStore.folders[0].id);
+        }
+    },
+
+    navigateToPath(path) {
+        this.currentPath = path;
+        this._refreshView();
+    },
+
     async selectFolder(folderId) {
         if (!folderId) return;
 
-        // Clear search
-        if (this.isSearchMode) {
-            this.clearSearch();
-        }
+        if (this.isSearchMode) this.clearSearch();
 
         this.searchQuery = '';
         this.isSearchMode = false;
+        this.currentPath = '';
 
-        // Update UI
         UI.showState('loading');
         UI.closeSidebar();
         UI.currentPage = 1;
 
-        // Highlight in tree
-        UI.renderFolderTree(folderId);
-        UI.renderBreadcrumb(folderId);
-
-        // Load files
         try {
             const files = await DataStore.getFilesForFolder(folderId);
             localStorage.setItem(CONFIG.lastFolderKey, folderId);
 
+            // Build folder tree
+            this.folderTree = DataStore.buildFolderTree(files);
+
             if (files.length === 0) {
                 UI.showState('empty');
                 UI.updateResultsCount([], false);
+                UI.renderFolderTree(folderId, this.folderTree, '');
+                UI.renderBreadcrumb(folderId, '');
             } else {
-                this.displayFiles(files, false);
+                this._refreshView();
             }
         } catch (err) {
-            UI.showError(`שגיאה בטעינת הקבצים: ${err.message}`);
+            UI.showError('שגיאה בטעינת הקבצים: ' + err.message);
+        }
+    },
+
+    _refreshView() {
+        const folderId = DataStore.currentFolderId;
+        if (!folderId) return;
+
+        UI.currentPage = 1;
+        UI.renderFolderTree(folderId, this.folderTree, this.currentPath);
+        UI.renderBreadcrumb(folderId, this.currentPath);
+
+        // Filter files by current path
+        let files = DataStore.currentFiles;
+        if (this.currentPath) {
+            files = files.filter(f => f.path === this.currentPath);
+        }
+
+        if (files.length === 0) {
+            UI.showState('empty');
+            UI.updateResultsCount([], false);
+        } else {
+            this.displayFiles(files, false);
         }
     },
 
@@ -82,17 +111,13 @@ const App = {
         this.searchQuery = query;
 
         if (!query || query.length < CONFIG.searchMinChars) {
-            // If search cleared, restore current folder view
             this.isSearchMode = false;
             if (DataStore.currentFolderId) {
-                UI.renderBreadcrumb(DataStore.currentFolderId);
-                UI.renderFolderTree(DataStore.currentFolderId);
-                this.displayFiles(DataStore.currentFiles, false);
+                this._refreshView();
             }
             return;
         }
 
-        // Need to build index if not ready
         if (!SearchEngine.isIndexReady) {
             UI.showState('loading');
             try {
@@ -110,36 +135,20 @@ const App = {
     },
 
     handleSearchResults(results) {
-        if (results === null) {
-            // No search (query too short)
-            this.isSearchMode = false;
-            return;
-        }
+        if (results === null) { this.isSearchMode = false; return; }
 
         this.isSearchMode = true;
         UI.currentPage = 1;
 
-        // Deselect all folders in tree
-        UI.renderFolderTree(null);
-        UI.renderBreadcrumb(null);
+        UI.renderFolderTree(null, null, '');
+        UI.renderBreadcrumb(null, '');
 
         if (results.length === 0) {
             UI.showState('empty');
             UI.updateResultsCount([], true);
-            // Change empty state message
-            UI.els.emptyState.innerHTML = `
-                <div class="empty-icon"><i class="fas fa-search"></i></div>
-                <h3>לא נמצאו תוצאות</h3>
-                <p>נסו מונח חיפוש אחר.</p>
-            `;
+            UI.els.emptyState.innerHTML = '<div class=\"empty-icon\"><i class=\"fas fa-search\"></i></div><h3>לא נמצאו תוצאות</h3><p>נסו מונח חיפוש אחר.</p>';
         } else {
-            // Restore empty state
-            UI.els.emptyState.innerHTML = `
-                <div class="empty-icon"><i class="fas fa-folder-open"></i></div>
-                <h3>אין קבצים בתיקייה זו</h3>
-            `;
-
-            // Extract items from Fuse results
+            UI.els.emptyState.innerHTML = '<div class=\"empty-icon\"><i class=\"fas fa-folder-open\"></i></div><h3>אין קבצים בתיקייה זו</h3>';
             const files = results.map(r => r.item);
             this.displayFiles(files, true);
         }
@@ -151,36 +160,34 @@ const App = {
         UI.els.searchInput.value = '';
         UI.els.searchClear.style.display = 'none';
 
-        // Restore folder view
         if (DataStore.currentFolderId) {
             this.selectFolder(DataStore.currentFolderId);
         }
     },
 
     renderCurrentFiles() {
-        const files = this.isSearchMode
-            ? this.getCurrentFileList()
-            : DataStore.currentFiles;
+        let files;
+        if (this.isSearchMode) {
+            if (this.searchQuery) {
+                const results = SearchEngine.search(this.searchQuery);
+                files = results ? results.map(r => r.item) : [];
+            } else {
+                files = [];
+            }
+        } else {
+            files = DataStore.currentFiles;
+            if (this.currentPath) {
+                files = files.filter(f => f.path === this.currentPath);
+            }
+        }
 
         this.displayFiles(files, this.isSearchMode);
-    },
-
-    getCurrentFileList() {
-        // This is called after search results are already processed
-        // The files were stored from the last search handler call
-        // We re-run search to get current results
-        if (this.isSearchMode && this.searchQuery) {
-            const results = SearchEngine.search(this.searchQuery);
-            return results ? results.map(r => r.item) : [];
-        }
-        return DataStore.currentFiles;
     },
 
     displayFiles(files, isFiltered) {
         const sorted = UI.sortFiles(files);
         const totalPages = Math.ceil(sorted.length / CONFIG.itemsPerPage);
 
-        // Clamp page
         if (UI.currentPage > totalPages) UI.currentPage = totalPages;
         if (UI.currentPage < 1) UI.currentPage = 1;
 
@@ -197,7 +204,6 @@ const App = {
     },
 
     async refresh() {
-        // Clear cache and reload
         DataStore.currentFiles = [];
         DataStore.allFiles = [];
         DataStore.fuseInstance = null;
@@ -206,12 +212,9 @@ const App = {
         UI.showState('loading');
         const success = await DataStore.init();
 
-        if (!success) {
-            UI.showError('הרענון נכשל. אנא נסו שוב.');
-            return;
-        }
+        if (!success) { UI.showError('הרענון נכשל. אנא נסו שוב.'); return; }
 
-        UI.renderFolderTree(null);
+        UI.renderFolderTree(null, null, '');
 
         if (DataStore.folders.length > 0) {
             await this.selectFolder(DataStore.folders[0].id);
@@ -226,7 +229,6 @@ document.addEventListener('DOMContentLoaded', () => {
     App.init().catch(err => {
         console.error('App initialization failed:', err);
         document.getElementById('errorState').style.display = '';
-        document.getElementById('errorMessage').textContent =
-            'שגיאה באתחול האפליקציה. אנא רעננו את העמוד.';
+        document.getElementById('errorMessage').textContent = 'שגיאה באתחול האפליקציה. אנא רעננו את העמוד.';
     });
 });
