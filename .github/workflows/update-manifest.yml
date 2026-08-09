@@ -46,11 +46,13 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Pull latest changes first to avoid conflicts
+          # Stash any generated data, pull latest, then re-apply
+          git stash --include-untracked -- data/ 2>/dev/null || true
           git pull --rebase origin main
+          git stash pop 2>/dev/null || true
 
           # Check if data files changed
-          if git diff --quiet data/; then
+          if git diff --quiet data/ && git diff --cached --quiet data/; then
             echo "No changes to data files."
           else
             git add data/
