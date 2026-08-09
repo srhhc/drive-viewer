@@ -6,8 +6,12 @@ const CONFIG = {
     // Data source
     dataBasePath: './data',
 
-    // Pagination
-    itemsPerPage: 48,
+    // Loading
+    itemsPerPage: 24,        // per load-more batch
+    initialBatch: 48,        // first render
+
+    // 'חדש' badge threshold (days)
+    newDaysThreshold: 7,
 
     // Search
     searchMinChars: 2,
@@ -41,6 +45,10 @@ const CONFIG = {
 
     // Sort mode
     sortModeKey: 'drive-viewer-sort-mode',
+    defaultSortMode: 'date',
+
+    // File type filter
+    filterModeKey: 'drive-viewer-filter-mode',
 
     // Video extensions to show with video icon
     videoExtensions: [

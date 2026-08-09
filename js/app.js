@@ -6,8 +6,12 @@
 const App = {
     searchQuery: '',
     isSearchMode: false,
-    currentPath: '',       // Current subfolder path (empty = root)
-    folderTree: null,      // Built folder tree from current files
+    currentPath: '',
+    folderTree: null,
+    typeFilter: 'all',   // 'all' | 'video' | 'audio' | 'image' | 'document'
+
+    currentDisplayFiles: [],
+    lastSearchFiles: [],
 
     async init() {
         UI.init();
@@ -16,7 +20,6 @@ const App = {
         UI.showState('loading');
 
         const success = await DataStore.init();
-
         if (!success) {
             UI.showError('לא ניתן לטעון את רשימת התיקיות. אנא ודאו שקובץ ה-index.json קיים ונסו שוב.');
             return;
@@ -35,7 +38,6 @@ const App = {
     },
 
     goHome() {
-        // Reset to root of current folder
         if (DataStore.currentFolderId) {
             this.currentPath = '';
             this._refreshView();
@@ -60,18 +62,15 @@ const App = {
 
         UI.showState('loading');
         UI.closeSidebar();
-        UI.currentPage = 1;
 
         try {
             const files = await DataStore.getFilesForFolder(folderId);
             localStorage.setItem(CONFIG.lastFolderKey, folderId);
-
-            // Build folder tree
             this.folderTree = DataStore.buildFolderTree(files);
 
             if (files.length === 0) {
                 UI.showState('empty');
-                UI.updateResultsCount([], false);
+                UI.els.resultsCount.textContent = '0 קבצים';
                 UI.renderFolderTree(folderId, this.folderTree, '');
                 UI.renderBreadcrumb(folderId, '');
             } else {
@@ -86,35 +85,57 @@ const App = {
         const folderId = DataStore.currentFolderId;
         if (!folderId) return;
 
-        UI.currentPage = 1;
         UI.renderFolderTree(folderId, this.folderTree, this.currentPath);
         UI.renderBreadcrumb(folderId, this.currentPath);
 
-        // Filter files by current path
         let files = DataStore.currentFiles;
         if (this.currentPath) {
-            files = files.filter(f => f.path === this.currentPath);
+            // Include descendants (files in subfolders of this path)
+            const prefix = this.currentPath + '/';
+            files = files.filter(f => f.path === this.currentPath || f.path.startsWith(prefix));
         }
 
         if (files.length === 0) {
             UI.showState('empty');
-            UI.updateResultsCount([], false);
+            UI.els.resultsCount.textContent = '0 קבצים';
+            UI.els.loadMoreWrap.style.display = 'none';
         } else {
             this.displayFiles(files, false);
         }
     },
 
+    /* --- Type filter --- */
+    setTypeFilter(filter) {
+        this.typeFilter = filter;
+        this.renderCurrentFiles();
+    },
+
+    _applyTypeFilter(files) {
+        if (this.typeFilter === 'all') return files;
+        const mimePrefix = {
+            video: 'video/',
+            audio: 'audio/',
+            image: 'image/',
+            document: ['application/pdf', 'application/msword', 'application/vnd.google-apps.document', 'application/vnd.google-apps.spreadsheet', 'application/vnd.google-apps.presentation', 'text/']
+        }[this.typeFilter];
+
+        return files.filter(f => {
+            if (Array.isArray(mimePrefix)) {
+                return mimePrefix.some(p => f.mimeType.startsWith(p));
+            }
+            return f.mimeType.startsWith(mimePrefix);
+        });
+    },
+
+    /* --- Search --- */
     async handleSearchInput() {
         const query = UI.els.searchInput.value;
         UI.els.searchClear.style.display = query ? 'block' : 'none';
-
         this.searchQuery = query;
 
         if (!query || query.length < CONFIG.searchMinChars) {
             this.isSearchMode = false;
-            if (DataStore.currentFolderId) {
-                this._refreshView();
-            }
+            if (DataStore.currentFolderId) this._refreshView();
             return;
         }
 
@@ -138,20 +159,34 @@ const App = {
         if (results === null) { this.isSearchMode = false; return; }
 
         this.isSearchMode = true;
-        UI.currentPage = 1;
-
         UI.renderFolderTree(null, null, '');
         UI.renderBreadcrumb(null, '');
 
         if (results.length === 0) {
             UI.showState('empty');
-            UI.updateResultsCount([], true);
-            UI.els.emptyState.innerHTML = '<div class=\"empty-icon\"><i class=\"fas fa-search\"></i></div><h3>לא נמצאו תוצאות</h3><p>נסו מונח חיפוש אחר.</p>';
-        } else {
-            UI.els.emptyState.innerHTML = '<div class=\"empty-icon\"><i class=\"fas fa-folder-open\"></i></div><h3>אין קבצים בתיקייה זו</h3>';
-            const files = results.map(r => r.item);
-            this.displayFiles(files, true);
+            UI.els.resultsCount.textContent = 'לא נמצאו תוצאות';
+            UI.els.loadMoreWrap.style.display = 'none';
+            UI.els.emptyState.innerHTML = '<div class="empty-icon"><i class="fas fa-search"></i></div><h3>לא נמצאו תוצאות</h3><p>נסו מונח חיפוש אחר.</p>';
+            return;
         }
+
+        UI.els.emptyState.innerHTML = '<div class="empty-icon"><i class="fas fa-folder-open"></i></div><h3>אין קבצים בתיקייה זו</h3>';
+
+        // Build highlight map: fileId -> first match indices
+        const highlights = {};
+        results.forEach(r => {
+            if (!highlights[r.item.id] && r.matches) {
+                const nameMatch = r.matches.find(m => m.key === 'name');
+                if (nameMatch && nameMatch.indices) {
+                    highlights[r.item.id] = { indices: nameMatch.indices };
+                }
+            }
+        });
+        UI.matchHighlights = highlights;
+
+        const files = results.map(r => r.item);
+        this.lastSearchFiles = files;
+        this.displayFiles(files, true);
     },
 
     clearSearch() {
@@ -159,48 +194,42 @@ const App = {
         this.isSearchMode = false;
         UI.els.searchInput.value = '';
         UI.els.searchClear.style.display = 'none';
+        UI.matchHighlights = {};
 
         if (DataStore.currentFolderId) {
             this.selectFolder(DataStore.currentFolderId);
         }
     },
 
+    /* --- Rendering --- */
     renderCurrentFiles() {
         let files;
         if (this.isSearchMode) {
-            if (this.searchQuery) {
-                const results = SearchEngine.search(this.searchQuery);
-                files = results ? results.map(r => r.item) : [];
-            } else {
-                files = [];
-            }
+            files = this.searchQuery ? this.lastSearchFiles : [];
         } else {
             files = DataStore.currentFiles;
             if (this.currentPath) {
-                files = files.filter(f => f.path === this.currentPath);
+                const prefix = this.currentPath + '/';
+                files = files.filter(f => f.path === this.currentPath || f.path.startsWith(prefix));
             }
         }
-
         this.displayFiles(files, this.isSearchMode);
     },
 
     displayFiles(files, isFiltered) {
-        const sorted = UI.sortFiles(files);
-        const totalPages = Math.ceil(sorted.length / CONFIG.itemsPerPage);
+        const filtered = this._applyTypeFilter(files);
+        const sorted = UI.sortFiles(filtered);
+        this.currentDisplayFiles = sorted;
 
-        if (UI.currentPage > totalPages) UI.currentPage = totalPages;
-        if (UI.currentPage < 1) UI.currentPage = 1;
-
+        UI.currentPage = 1;
+        UI.visibleCount = Math.min(CONFIG.initialBatch, sorted.length);
         UI.showState('content');
+        UI.renderFiles(sorted, isFiltered);
+    },
 
-        if (UI.viewMode === 'grid') {
-            UI.renderFileGrid(sorted, UI.currentPage);
-        } else {
-            UI.renderFileList(sorted, UI.currentPage);
-        }
-
-        UI.renderPagination(sorted, UI.currentPage);
-        UI.updateResultsCount(sorted, isFiltered);
+    loadMore() {
+        UI.visibleCount += CONFIG.itemsPerPage;
+        UI.renderFiles(this.currentDisplayFiles, this.isSearchMode);
     },
 
     async refresh() {
@@ -211,7 +240,6 @@ const App = {
 
         UI.showState('loading');
         const success = await DataStore.init();
-
         if (!success) { UI.showError('הרענון נכשל. אנא נסו שוב.'); return; }
 
         UI.renderFolderTree(null, null, '');

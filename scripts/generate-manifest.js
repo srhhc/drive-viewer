@@ -158,7 +158,22 @@ async function scanFolder(folderId) {
     const allFiles = [];
     await listFilesRecursive(folderId, '', allFiles);
 
-    return { name: folderName, files: allFiles };
+    // Normalize file metadata
+    for (const f of allFiles) {
+        // Google returns size as a string
+        f.size = parseInt(f.size, 10) || 0;
+
+        // Extract duration & resolution from video metadata
+        if (f.videoMediaMetadata) {
+            f.durationMs = parseInt(f.videoMediaMetadata.durationMillis, 10) || 0;
+            f.width = f.videoMediaMetadata.width || 0;
+            f.height = f.videoMediaMetadata.height || 0;
+        }
+        // Don't ship the raw videoMediaMetadata (redundant)
+        delete f.videoMediaMetadata;
+    }
+
+    return { name: (folderName || '').trim(), files: allFiles };
 }
 
 async function listFilesRecursive(folderId, currentPath, accumulator, pageToken = null, depth = 0) {
@@ -182,8 +197,8 @@ async function listFilesRecursive(folderId, currentPath, accumulator, pageToken 
         if (file.mimeType === 'application/vnd.google-apps.folder') {
             folders.push(file);
         } else if (!EXCLUDE_MIME_TYPES.includes(file.mimeType)) {
-            // Add relative path from root folder
-            file.path = currentPath;
+            // Add relative path from root folder (trimmed segments)
+            file.path = currentPath.split('/').map(s => s.trim()).filter(Boolean).join('/');
             files.push(file);
         }
     }
@@ -195,8 +210,9 @@ async function listFilesRecursive(folderId, currentPath, accumulator, pageToken 
     }
 
     for (const subFolder of folders) {
-        const subPath = currentPath ? currentPath + '/' + subFolder.name : subFolder.name;
-        console.log(indent + '  -> Entering: ' + subFolder.name);
+        const cleanName = (subFolder.name || '').trim();
+        const subPath = currentPath ? currentPath + '/' + cleanName : cleanName;
+        console.log(indent + '  -> Entering: ' + cleanName);
         await listFilesRecursive(subFolder.id, subPath, accumulator, null, depth + 1);
     }
 

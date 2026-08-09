@@ -4,12 +4,14 @@
    ============================================ */
 
 const UI = {
-    // Current state
     viewMode: 'grid',   // 'grid' | 'list'
-    sortMode: 'name',   // 'name' | 'date' | 'size'
-    currentPage: 1,
+    sortMode: null,     // 'name' | 'date' | 'size'
+    currentPage: 1,     // legacy, kept for safety
+    visibleCount: 0,    // how many files currently rendered
+    totalCount: 0,      // total files in current view
+    matchHighlights: {},// fileId -> indices for search highlight
+    loadMoreObserver: null,
 
-    // DOM refs (populated on init)
     els: {},
 
     init() {
@@ -30,6 +32,9 @@ const UI = {
             resultsCount: document.getElementById('resultsCount'),
             sortSelect: document.getElementById('sortSelect'),
             viewBtns: document.querySelectorAll('.view-btn'),
+            typeFilterBtns: document.querySelectorAll('.type-filter-btn'),
+            loadMoreBtn: document.getElementById('loadMoreBtn'),
+            loadMoreWrap: document.getElementById('loadMoreWrap'),
 
             contentArea: document.getElementById('contentArea'),
             welcomeState: document.getElementById('welcomeState'),
@@ -39,7 +44,6 @@ const UI = {
             errorMessage: document.getElementById('errorMessage'),
             fileGrid: document.getElementById('fileGrid'),
             fileList: document.getElementById('fileList'),
-            pagination: document.getElementById('pagination'),
 
             themeToggle: document.getElementById('themeToggle'),
             disclaimerBanner: document.getElementById('disclaimerBanner'),
@@ -54,6 +58,8 @@ const UI = {
         this._loadDisclaimer();
         this._loadViewMode();
         this._loadSortMode();
+        this._loadFilterMode();
+        this._setupLoadMoreObserver();
     },
 
     _bindEvents() {
@@ -73,6 +79,12 @@ const UI = {
         this.els.viewBtns.forEach(btn => {
             btn.addEventListener('click', () => { this.setViewMode(btn.dataset.view); });
         });
+
+        this.els.typeFilterBtns.forEach(btn => {
+            btn.addEventListener('click', () => { this.setTypeFilter(btn.dataset.filter); });
+        });
+
+        this.els.loadMoreBtn.addEventListener('click', () => App.loadMore());
 
         this.els.themeToggle.addEventListener('click', () => this.toggleTheme());
         this.els.disclaimerClose.addEventListener('click', () => this.dismissDisclaimer());
@@ -98,7 +110,7 @@ const UI = {
         const folders = DataStore.folders;
 
         if (!folders || folders.length === 0) {
-            tree.innerHTML = '<div class=\"tree-loading\"><span>אין תיקיות זמינות</span></div>';
+            tree.innerHTML = '<div class="tree-loading"><span>אין תיקיות זמינות</span></div>';
             this.els.sidebarCount.textContent = '0';
             return;
         }
@@ -108,18 +120,17 @@ const UI = {
 
         let html = '';
 
-        // Top-level Drive folders
         folders.forEach(folder => {
             const isActive = folder.id === activeFolderId;
-            html += '<div class=\"tree-item' + (isActive ? ' active' : '') + '\" data-folder-id=\"' + folder.id + '\" role=\"button\" tabindex=\"0\">';
-            html += '<span class=\"folder-icon\"><i class=\"fas fa-folder\"></i></span>';
-            html += '<span class=\"folder-name\">' + this._escapeHtml(folder.name) + '</span>';
-            html += '<span class=\"folder-badge\">' + (folder.fileCount || 0).toLocaleString() + '</span>';
+            const hasError = !!folder.error;
+            html += '<div class="tree-item' + (isActive ? ' active' : '') + '" data-folder-id="' + folder.id + '" role="button" tabindex="0">';
+            html += '<span class="folder-icon"><i class="fas fa-folder"></i></span>';
+            html += '<span class="folder-name">' + this._escapeHtml(folder.name) + '</span>';
+            html += '<span class="folder-badge' + (hasError ? ' badge-error' : '') + '">' + (folder.fileCount || 0).toLocaleString() + '</span>';
             html += '</div>';
 
-            // Subfolder tree for the active Drive folder
             if (isActive && subfolderTree && subfolderTree.children && subfolderTree.children.length > 0) {
-                html += '<div class=\"subfolder-tree\">';
+                html += '<div class="subfolder-tree">';
                 html += this._renderSubfolderTree(subfolderTree.children, currentPath || '', 1);
                 html += '</div>';
             }
@@ -127,7 +138,6 @@ const UI = {
 
         tree.innerHTML = html;
 
-        // Bind top-level folder clicks
         tree.querySelectorAll('.tree-item[data-folder-id]').forEach(item => {
             item.addEventListener('click', () => {
                 App.selectFolder(item.dataset.folderId);
@@ -135,12 +145,23 @@ const UI = {
             });
         });
 
-        // Bind subfolder clicks
         tree.querySelectorAll('.tree-subitem').forEach(item => {
+            // Chevron click toggles collapse
+            const chevron = item.querySelector('.tree-chevron');
+            if (chevron) {
+                chevron.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const childrenWrap = item.nextElementSibling;
+                    if (childrenWrap && childrenWrap.classList.contains('tree-children')) {
+                        const collapsed = childrenWrap.classList.toggle('collapsed');
+                        chevron.classList.toggle('closed', collapsed);
+                    }
+                });
+            }
+            // Click on the item navigates
             item.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const path = item.dataset.path;
-                App.navigateToPath(path);
+                App.navigateToPath(item.dataset.path);
             });
         });
     },
@@ -149,21 +170,34 @@ const UI = {
         let html = '';
         children.forEach(child => {
             const isActive = child.path === currentPath;
+            const hasChildren = child.children && child.children.length > 0;
+            // Default: collapsed unless it's an ancestor of the active path
+            const pathParts = currentPath ? currentPath.split('/') : [];
+            const isAncestor = hasChildren && pathParts.some((_, i) => pathParts.slice(0, i + 1).join('/') === child.path);
+            const collapsed = hasChildren && !isActive && !isAncestor;
+
             const indent = (depth - 1) * 20;
-            html += '<div class=\"tree-subitem' + (isActive ? ' active' : '') + '\" data-path=\"' + child.path + '\" style=\"padding-right:' + (16 + indent) + 'px\" role=\"button\" tabindex=\"0\">';
-            html += '<span class=\"folder-icon\"><i class=\"fas fa-folder' + (isActive ? '-open' : '') + '\"></i></span>';
-            html += '<span class=\"folder-name\">' + this._escapeHtml(child.name) + '</span>';
-            html += '<span class=\"folder-badge\">' + (child.fileCount || 0).toLocaleString() + '</span>';
+            html += '<div class="tree-subitem' + (isActive ? ' active' : '') + '" data-path="' + this._escapeHtml(child.path) + '" style="padding-right:' + (16 + indent) + 'px" role="button" tabindex="0">';
+            if (hasChildren) {
+                html += '<span class="tree-chevron' + (collapsed ? ' closed' : '') + '"><i class="fas fa-chevron-down"></i></span>';
+            } else {
+                html += '<span class="tree-chevron tree-chevron-spacer"></span>';
+            }
+            html += '<span class="folder-icon"><i class="fas fa-folder' + (isActive ? '-open' : '') + '"></i></span>';
+            html += '<span class="folder-name">' + this._escapeHtml(child.name) + '</span>';
+            html += '<span class="folder-badge">' + (child.fileCount || 0).toLocaleString() + '</span>';
             html += '</div>';
 
-            if (child.children && child.children.length > 0) {
+            if (hasChildren) {
+                html += '<div class="tree-children' + (collapsed ? ' collapsed' : '') + '">';
                 html += this._renderSubfolderTree(child.children, currentPath, depth + 1);
+                html += '</div>';
             }
         });
         return html;
     },
 
-    /* --- Breadcrumb (with subfolder path support) --- */
+    /* --- Breadcrumb --- */
     renderBreadcrumb(folderId, currentPath) {
         const path = this.els.breadcrumbPath;
         if (!folderId) { path.innerHTML = ''; return; }
@@ -171,42 +205,59 @@ const UI = {
         const folder = DataStore.folders.find(f => f.id === folderId);
         if (!folder) { path.innerHTML = ''; return; }
 
-        let html = '<span class=\"breadcrumb-separator\">/</span>';
-        html += '<button data-folder=\"' + folder.id + '\">' + this._escapeHtml(folder.name) + '</button>';
+        let html = '<span class="breadcrumb-separator">/</span>';
+        html += '<button data-folder="' + folder.id + '">' + this._escapeHtml(folder.name) + '</button>';
 
-        // Subfolder breadcrumbs
         if (currentPath) {
             const parts = currentPath.split('/');
             let accumulated = '';
             parts.forEach((part, i) => {
                 accumulated = i === 0 ? part : accumulated + '/' + part;
-                html += '<span class=\"breadcrumb-separator\">/</span>';
-                html += '<button data-path=\"' + accumulated + '\">' + this._escapeHtml(part) + '</button>';
+                html += '<span class="breadcrumb-separator">/</span>';
+                html += '<button data-path="' + this._escapeHtml(accumulated) + '">' + this._escapeHtml(part) + '</button>';
             });
         }
 
         path.innerHTML = html;
 
-        // Bind folder click (go to root)
         const folderBtn = path.querySelector('button[data-folder]');
         if (folderBtn) {
             folderBtn.addEventListener('click', () => App.selectFolder(folderBtn.dataset.folder));
         }
 
-        // Bind subfolder clicks
         path.querySelectorAll('button[data-path]').forEach(btn => {
             btn.addEventListener('click', () => App.navigateToPath(btn.dataset.path));
         });
     },
 
-    /* --- File Grid --- */
-    renderFileGrid(files, page) {
-        const grid = this.els.fileGrid;
-        const start = (page - 1) * CONFIG.itemsPerPage;
-        const end = start + CONFIG.itemsPerPage;
-        const pageFiles = files.slice(start, end);
+    /* --- Rendering: grid/list with load-more --- */
+    renderFiles(files, isFiltered) {
+        this.totalCount = files.length;
+        this.els.resultsCount.textContent = isFiltered
+            ? 'נמצאו ' + files.length.toLocaleString() + ' תוצאות'
+            : files.length.toLocaleString() + ' קבצים';
 
-        grid.innerHTML = pageFiles.map(file => this._fileCardHtml(file)).join('');
+        const visible = files.slice(0, this.visibleCount);
+
+        if (this.viewMode === 'grid') {
+            this.renderFileGrid(visible);
+        } else {
+            this.renderFileList(visible);
+        }
+
+        // Load more button
+        const hasMore = this.visibleCount < files.length;
+        this.els.loadMoreWrap.style.display = hasMore ? 'flex' : 'none';
+        if (hasMore) {
+            const remaining = files.length - this.visibleCount;
+            this.els.loadMoreBtn.textContent = 'טען עוד (' + Math.min(remaining, CONFIG.itemsPerPage) + ') — נותרו ' + remaining.toLocaleString();
+        }
+    },
+
+    /* --- File Grid --- */
+    renderFileGrid(files) {
+        const grid = this.els.fileGrid;
+        grid.innerHTML = files.map(file => this._fileCardHtml(file)).join('');
         grid.style.display = 'grid';
 
         grid.querySelectorAll('.file-card').forEach(card => {
@@ -214,7 +265,6 @@ const UI = {
             const file = files.find(f => f.id === fileId);
             if (!file) return;
 
-            // Handle broken images: hide img, show fallback icon
             const img = card.querySelector('.file-card-thumb img');
             if (img) {
                 img.addEventListener('error', () => {
@@ -237,37 +287,67 @@ const UI = {
         });
     },
 
+    _highlightName(file) {
+        const name = this._escapeHtml(file.name);
+        const match = this.matchHighlights[file.id];
+        if (!match || !match.indices || match.indices.length === 0) return name;
+
+        // Build highlighted name using match indices
+        let result = '';
+        let lastEnd = 0;
+        // Escape the name first into HTML, but indices are on raw text...
+        // Simpler robust approach: operate on raw text, escape fragments
+        for (const [start, end] of match.indices) {
+            result += this._escapeHtml(file.name.slice(lastEnd, start));
+            result += '<mark class="search-highlight">' + this._escapeHtml(file.name.slice(start, end + 1)) + '</mark>';
+            lastEnd = end + 1;
+        }
+        result += this._escapeHtml(file.name.slice(lastEnd));
+        return result;
+    },
+
     _fileCardHtml(file) {
         const es = (s) => this._escapeHtml(s);
         const thumbContent = file.thumbnailLink
             ? '<img src="' + es(file.thumbnailLink) + '" alt="" loading="lazy"><span class="thumb-icon" style="display:none">' + file.icon + '</span>'
             : '<span class="thumb-icon">' + file.icon + '</span>';
 
-        const badge = file.isVideo ? '<span class=\"thumb-badge\"><i class=\"fas fa-play\"></i></span>' : '';
-        const pathLabel = file.path ? '<div class=\"file-card-path\" title=\"' + this._escapeHtml(file.path) + '\"><i class=\"fas fa-folder\"></i> ' + this._escapeHtml(file.path) + '</div>' : '';
+        const badges = [];
+        if (file.isNew) badges.push('<span class="badge-new">חדש</span>');
+        if (file.qualityLabel && file.isVideo) badges.push('<span class="badge-quality">' + file.qualityLabel + '</span>');
 
-        return '<div class=\"file-card\" data-file-id=\"' + file.id + '\">'
-            + '<div class=\"file-card-thumb\">' + thumbContent + badge + '</div>'
-            + '<div class=\"file-card-body\">'
-            + '<div class=\"file-card-name\" title=\"' + this._escapeHtml(file.name) + '\">' + this._escapeHtml(file.name) + '</div>'
-            + pathLabel
-            + '<div class=\"file-card-meta\"><span>' + file.sizeFormatted + '</span><span>' + file.dateFormatted + '</span></div>'
+        const thumbOverlay = (file.isVideo && file.durationFormatted)
+            ? '<span class="thumb-badge"><i class="fas fa-play"></i> ' + file.durationFormatted + '</span>'
+            : (file.isVideo ? '<span class="thumb-badge"><i class="fas fa-play"></i></span>' : '');
+
+        const pathLabel = file.path
+            ? '<div class="file-card-path" title="' + es(file.path) + '"><i class="fas fa-folder"></i> ' + es(file.path) + '</div>'
+            : '';
+
+        const folderChip = (App.isSearchMode && file.folderName)
+            ? '<div class="file-card-folder" title="' + es(file.folderName) + '"><i class="fas fa-drive"></i> ' + es(file.folderName) + '</div>'
+            : '';
+
+        return '<div class="file-card" data-file-id="' + file.id + '">'
+            + '<div class="file-card-thumb">' + thumbContent
+            + (badges.length ? '<div class="thumb-corner">' + badges.join('') + '</div>' : '')
+            + thumbOverlay + '</div>'
+            + '<div class="file-card-body">'
+            + '<div class="file-card-name" title="' + es(file.name) + '">' + this._highlightName(file) + '</div>'
+            + pathLabel + folderChip
+            + '<div class="file-card-meta"><span>' + file.sizeFormatted + '</span><span>' + file.dateFormatted + '</span></div>'
             + '</div>'
-            + '<div class=\"file-card-actions\">'
-            + (file.isVideo ? '<button class=\"btn-play\"><i class=\"fas fa-play\"></i> צפה</button>' : '')
-            + '<a class=\"btn-dl\" href=\"' + getDriveDownloadUrl(file.id) + '\" target=\"_blank\" rel=\"noopener\"><i class=\"fas fa-download\"></i> הורד</a>'
+            + '<div class="file-card-actions">'
+            + (file.isVideo ? '<button class="btn-play"><i class="fas fa-play"></i> צפה</button>' : '')
+            + '<a class="btn-dl" href="' + getDriveDownloadUrl(file.id) + '" target="_blank" rel="noopener"><i class="fas fa-download"></i> הורד</a>'
             + '</div></div>';
     },
 
     /* --- File List --- */
-    renderFileList(files, page) {
+    renderFileList(files) {
         const list = this.els.fileList;
-        const start = (page - 1) * CONFIG.itemsPerPage;
-        const end = start + CONFIG.itemsPerPage;
-        const pageFiles = files.slice(start, end);
-
-        list.innerHTML = '<div class=\"file-list-header\"><span>שם הקובץ</span><span class=\"file-list-size\">גודל</span><span class=\"file-list-date\">תאריך</span><span>פעולות</span></div>'
-            + pageFiles.map(file => this._fileListRowHtml(file)).join('');
+        list.innerHTML = '<div class="file-list-header"><span>שם הקובץ</span><span class="file-list-size">גודל</span><span class="file-list-date">תאריך</span><span>פעולות</span></div>'
+            + files.map(file => this._fileListRowHtml(file)).join('');
         list.style.display = 'flex';
 
         list.querySelectorAll('.file-list-row').forEach(row => {
@@ -289,58 +369,33 @@ const UI = {
     },
 
     _fileListRowHtml(file) {
-        return '<div class=\"file-list-row\" data-file-id=\"' + file.id + '\">'
-            + '<div class=\"file-list-name\"><span class=\"file-icon\">' + file.icon + '</span>'
-            + '<span title=\"' + this._escapeHtml(file.name) + '\">' + this._escapeHtml(file.name) + '</span></div>'
-            + '<span class=\"file-list-size\">' + file.sizeFormatted + '</span>'
-            + '<span class=\"file-list-date\">' + file.dateFormatted + '</span>'
-            + '<div class=\"file-list-actions\">'
-            + (file.isVideo ? '<button class=\"btn-play\"><i class=\"fas fa-play\"></i> צפה</button>' : '')
-            + '<a href=\"' + getDriveDownloadUrl(file.id) + '\" target=\"_blank\" rel=\"noopener\"><i class=\"fas fa-download\"></i></a>'
+        return '<div class="file-list-row" data-file-id="' + file.id + '">'
+            + '<div class="file-list-name"><span class="file-icon">' + file.icon + '</span>'
+            + (file.isNew ? '<span class="badge-new">חדש</span>' : '')
+            + '<span title="' + this._escapeHtml(file.name) + '">' + this._highlightName(file) + '</span></div>'
+            + '<span class="file-list-size">' + file.sizeFormatted + '</span>'
+            + '<span class="file-list-date">' + file.dateFormatted + '</span>'
+            + '<div class="file-list-actions">'
+            + (file.isVideo ? '<button class="btn-play"><i class="fas fa-play"></i> צפה</button>' : '')
+            + '<a href="' + getDriveDownloadUrl(file.id) + '" target="_blank" rel="noopener"><i class="fas fa-download"></i></a>'
             + '</div></div>';
     },
 
-    /* --- Pagination --- */
-    renderPagination(files, currentPage) {
-        const totalPages = Math.ceil(files.length / CONFIG.itemsPerPage);
-        const pagination = this.els.pagination;
-
-        if (totalPages <= 1) { pagination.style.display = 'none'; return; }
-
-        let html = '<button ' + (currentPage === 1 ? 'disabled' : '') + ' data-page=\"' + (currentPage - 1) + '\">‹</button>';
-        const maxVisible = 5;
-        let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-        let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-        if (endPage - startPage < maxVisible - 1) startPage = Math.max(1, endPage - maxVisible + 1);
-
-        if (startPage > 1) {
-            html += '<button data-page=\"1\">1</button>';
-            if (startPage > 2) html += '<span>…</span>';
-        }
-        for (let i = startPage; i <= endPage; i++) {
-            html += '<button class=\"' + (i === currentPage ? 'active' : '') + '\" data-page=\"' + i + '\">' + i + '</button>';
-        }
-        if (endPage < totalPages) {
-            if (endPage < totalPages - 1) html += '<span>…</span>';
-            html += '<button data-page=\"' + totalPages + '\">' + totalPages + '</button>';
-        }
-        html += '<button ' + (currentPage === totalPages ? 'disabled' : '') + ' data-page=\"' + (currentPage + 1) + '\">›</button>';
-
-        pagination.innerHTML = html;
-        pagination.style.display = 'flex';
-
-        pagination.querySelectorAll('button:not([disabled])').forEach(btn => {
-            btn.addEventListener('click', () => {
-                this.currentPage = parseInt(btn.dataset.page);
-                App.renderCurrentFiles();
-                this.els.contentArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    /* --- Load More --- */
+    _setupLoadMoreObserver() {
+        this.loadMoreObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && this.els.loadMoreWrap.style.display !== 'none') {
+                    App.loadMore();
+                }
             });
-        });
+        }, { rootMargin: '200px' });
+        this.loadMoreObserver.observe(this.els.loadMoreBtn);
     },
 
     /* --- State Visibility --- */
     showState(state) {
-        ['welcomeState','loadingState','emptyState','errorState','fileGrid','fileList','pagination'].forEach(id => {
+        ['welcomeState','loadingState','emptyState','errorState','fileGrid','fileList'].forEach(id => {
             this.els[id].style.display = 'none';
         });
         if (state === 'content') return;
@@ -372,8 +427,25 @@ const UI = {
         const saved = localStorage.getItem(CONFIG.sortModeKey);
         if (saved === 'name' || saved === 'date' || saved === 'size') {
             this.sortMode = saved;
-            this.els.sortSelect.value = saved;
+        } else {
+            this.sortMode = CONFIG.defaultSortMode;
         }
+        this.els.sortSelect.value = this.sortMode;
+    },
+
+    /* --- Type Filter --- */
+    setTypeFilter(filter) {
+        localStorage.setItem(CONFIG.filterModeKey, filter);
+        this.els.typeFilterBtns.forEach(b => b.classList.toggle('active', b.dataset.filter === filter));
+        App.setTypeFilter(filter);
+    },
+
+    _loadFilterMode() {
+        const saved = localStorage.getItem(CONFIG.filterModeKey);
+        const valid = ['all', 'video', 'audio', 'image', 'document'];
+        const filter = valid.includes(saved) ? saved : 'all';
+        this.els.typeFilterBtns.forEach(b => b.classList.toggle('active', b.dataset.filter === filter));
+        App.setTypeFilter(filter);
     },
 
     /* --- Theme --- */
@@ -412,18 +484,11 @@ const UI = {
         localStorage.setItem(CONFIG.disclaimerKey, 'dismissed');
     },
 
-    /* --- Results Count --- */
-    updateResultsCount(files, filtered) {
-        this.els.resultsCount.textContent = filtered
-            ? 'נמצאו ' + files.length.toLocaleString() + ' תוצאות'
-            : files.length.toLocaleString() + ' קבצים';
-    },
-
     /* --- Scroll to top --- */
     _setupScrollToTop() {
         const btn = document.createElement('button');
         btn.className = 'scroll-top';
-        btn.innerHTML = '<i class=\"fas fa-chevron-up\"></i>';
+        btn.innerHTML = '<i class="fas fa-chevron-up"></i>';
         btn.setAttribute('aria-label', 'חזרה למעלה');
         document.body.appendChild(btn);
 
@@ -433,9 +498,9 @@ const UI = {
 
     /* --- Utility --- */
     _escapeHtml(str) {
-        if (!str) return '';
+        if (str === undefined || str === null) return '';
         const div = document.createElement('div');
-        div.textContent = str;
+        div.textContent = String(str);
         return div.innerHTML;
     },
 

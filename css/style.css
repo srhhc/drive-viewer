@@ -291,7 +291,42 @@ img { max-width: 100%; }
 
 .subfolder-tree {
     border-right: 2px solid var(--border);
-    margin-right: 20px;
+    margin-right: 12px;
+}
+
+.tree-children {
+    margin-right: 16px;
+    border-right: 2px solid var(--border);
+}
+
+.tree-children.collapsed {
+    display: none;
+}
+
+.tree-chevron {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+    border-radius: 4px;
+}
+
+.tree-chevron:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.tree-chevron.closed {
+    transform: rotate(-90deg);
+}
+
+.tree-chevron-spacer {
+    visibility: hidden;
 }
 
 .tree-loading {
@@ -443,6 +478,43 @@ img { max-width: 100%; }
     color: var(--text-muted);
 }
 
+/* Type filter buttons */
+.type-filter {
+    display: flex;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    padding: 3px;
+    gap: 2px;
+}
+
+.type-filter-btn {
+    padding: 7px 10px;
+    border-radius: 6px;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    transition: all var(--transition);
+}
+
+.type-filter-btn.active {
+    background: var(--bg-secondary);
+    color: var(--accent);
+    box-shadow: var(--shadow-sm);
+}
+
+.type-filter-btn:hover:not(.active) { color: var(--text-secondary); }
+
+/* Load more */
+.load-more-wrap {
+    display: flex;
+    justify-content: center;
+    padding: 24px 0 8px;
+}
+
+.load-more-btn {
+    padding: 12px 32px;
+    font-size: 0.95rem;
+}
+
 .sort-select {
     padding: 8px 12px;
     border: 1px solid var(--border);
@@ -573,7 +645,59 @@ img { max-width: 100%; }
     border-radius: 4px;
     font-size: 0.7rem;
     font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    direction: ltr;
 }
+
+/* Corner badges (new / quality) */
+.thumb-corner {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    z-index: 2;
+}
+
+.badge-new {
+    background: var(--danger);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+
+.badge-quality {
+    background: rgba(79, 70, 229, 0.9);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+
+.badge-error {
+    background: rgba(239, 68, 68, 0.15) !important;
+    color: var(--danger) !important;
+}
+
+/* Folder name chip on file cards (search results across folders) */
+.file-card-folder {
+    font-size: 0.72rem;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.file-card-folder i { font-size: 0.65rem; }
 
 .file-card-body {
     padding: 12px 14px;
@@ -1048,6 +1172,7 @@ img { max-width: 100%; }
     /* Toolbar */
     .toolbar { gap: 8px; }
     .results-count { display: none; }
+    .type-filter-btn { padding: 7px 8px; }
 
     /* Modal */
     .modal-overlay { padding: 0; }

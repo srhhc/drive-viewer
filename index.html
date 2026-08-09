@@ -101,6 +101,13 @@
                             <i class="fas fa-list"></i>
                         </button>
                     </div>
+                    <div class="type-filter">
+                        <button class="type-filter-btn active" data-filter="all" aria-label="הכל"><i class="fas fa-th"></i></button>
+                        <button class="type-filter-btn" data-filter="video" aria-label="וידאו"><i class="fas fa-film"></i></button>
+                        <button class="type-filter-btn" data-filter="audio" aria-label="אודיו"><i class="fas fa-music"></i></button>
+                        <button class="type-filter-btn" data-filter="image" aria-label="תמונות"><i class="fas fa-image"></i></button>
+                        <button class="type-filter-btn" data-filter="document" aria-label="מסמכים"><i class="fas fa-file-alt"></i></button>
+                    </div>
                 </div>
                 <div class="toolbar-right">
                     <span class="results-count" id="resultsCount"></span>
@@ -150,8 +157,10 @@
                 <!-- List view -->
                 <div class="file-list" id="fileList" style="display:none;"></div>
 
-                <!-- Pagination -->
-                <div class="pagination" id="pagination" style="display:none;"></div>
+                <!-- Load more -->
+                <div class="load-more-wrap" id="loadMoreWrap" style="display:none;">
+                    <button class="btn btn-primary load-more-btn" id="loadMoreBtn">טען עוד</button>
+                </div>
             </div>
         </main>
     </div>
@@ -172,7 +181,7 @@
             </div>
             <div class="modal-body">
                 <div class="player-wrapper" id="playerWrapper">
-                    <iframe id="playerFrame" src="" allowfullscreen allow="autoplay; fullscreen"></iframe>
+                    <iframe id="playerFrame" src="" allow="autoplay; fullscreen"></iframe>
                 </div>
             </div>
         </div>

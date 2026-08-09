@@ -42,7 +42,14 @@ const DataStore = {
                 }
                 throw new Error(`HTTP ${resp.status}`);
             }
-            const data = await resp.json();
+            let data;
+            try {
+                data = await resp.json();
+            } catch {
+                // Not valid JSON (e.g. HTML error page) — treat as empty
+                console.warn(`Folder ${folderId} returned invalid data; treating as empty.`);
+                return [];
+            }
             return this.processFiles(data.files || [], data.folderName || '');
         } catch (err) {
             console.warn(`Could not load folder ${folderId}:`, err.message);
@@ -52,24 +59,34 @@ const DataStore = {
 
     // Process raw file data into enriched format
     processFiles(files, folderName) {
-        return files.map(f => ({
-            id: f.id,
-            name: f.name,
-            size: f.size || 0,
-            mimeType: f.mimeType || '',
-            modifiedTime: f.modifiedTime || '',
-            thumbnailLink: f.thumbnailLink || '',
-            webViewLink: f.webViewLink || '',
-            webContentLink: f.webContentLink || '',
-            path: f.path || '',
-            folderName: folderName,
-            // Derived properties
-            extension: getFileExtension(f.name),
-            isVideo: isVideoFile(f.name, f.mimeType),
-            sizeFormatted: formatFileSize(f.size),
-            dateFormatted: formatDate(f.modifiedTime),
-            icon: getFileIcon(f.name, f.mimeType)
-        }));
+        return files.map(f => {
+            const size = parseInt(f.size, 10) || 0;
+            const modifiedTime = f.modifiedTime || '';
+            return {
+                id: f.id,
+                name: f.name,
+                size: size,
+                mimeType: f.mimeType || '',
+                modifiedTime: modifiedTime,
+                thumbnailLink: f.thumbnailLink || '',
+                webViewLink: f.webViewLink || '',
+                webContentLink: f.webContentLink || '',
+                path: f.path || '',
+                folderName: folderName,
+                durationMs: parseInt(f.durationMs, 10) || 0,
+                width: f.width || 0,
+                height: f.height || 0,
+                // Derived properties
+                extension: getFileExtension(f.name),
+                isVideo: isVideoFile(f.name, f.mimeType),
+                sizeFormatted: formatFileSize(size),
+                dateFormatted: formatDate(modifiedTime),
+                icon: getFileIcon(f.name, f.mimeType),
+                isNew: isRecentlyAdded(modifiedTime),
+                durationFormatted: formatDuration(parseInt(f.durationMs, 10) || 0),
+                qualityLabel: getQualityLabel(f.width, f.height)
+            };
+        });
     },
 
     // Build a folder tree from file paths
@@ -190,6 +207,35 @@ function formatFileSize(bytes) {
         i++;
     }
     return `${size.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
+}
+
+function isRecentlyAdded(dateStr) {
+    if (!dateStr) return false;
+    try {
+        const date = new Date(dateStr);
+        const diffMs = Date.now() - date.getTime();
+        return diffMs >= 0 && diffMs < CONFIG.newDaysThreshold * 24 * 60 * 60 * 1000;
+    } catch { return false; }
+}
+
+function formatDuration(ms) {
+    if (!ms) return '';
+    const totalSec = Math.round(ms / 1000);
+    const hours = Math.floor(totalSec / 3600);
+    const minutes = Math.floor((totalSec % 3600) / 60);
+    const seconds = totalSec % 60;
+    if (hours > 0) return hours + ':' + String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+    return minutes + ':' + String(seconds).padStart(2, '0');
+}
+
+function getQualityLabel(width, height) {
+    if (!width || !height) return '';
+    if (height >= 2160 || width >= 3840) return '4K';
+    if (height >= 1080 || width >= 1920) return 'HD';
+    if (height >= 720 || width >= 1280) return '720p';
+    if (height >= 480 || width >= 854) return '480p';
+    if (height >= 360) return '360p';
+    return '';
 }
 
 function formatDate(dateStr) {
