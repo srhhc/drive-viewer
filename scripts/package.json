@@ -9,5 +9,12 @@
     },
     "scripts": {
         "generate": "node generate-manifest.js"
+    },
+    "main": "add-secrets.js",
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "libsodium-wrappers": "^0.8.4"
     }
 }
