@@ -1,0 +1,64 @@
+name: 🔄 עדכון יומי — סריקת Google Drive
+
+on:
+  schedule:
+    # כל יום ב-06:00 UTC (09:00 שעון ישראל)
+    - cron: '0 6 * * *'
+  workflow_dispatch:  # הרצה ידנית
+  push:
+    branches:
+      - main
+    paths:
+      - 'scripts/generate-manifest.js'
+      - '.github/workflows/update-manifest.yml'
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  update-manifest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: scripts/package.json
+
+      - name: 📦 Install dependencies
+        working-directory: ./scripts
+        run: npm ci
+
+      - name: 🔍 סריקת תיקיות Google Drive
+        working-directory: ./scripts
+        env:
+          DRIVE_API_KEY: ${{ secrets.DRIVE_API_KEY }}
+          DRIVE_FOLDER_IDS: ${{ secrets.DRIVE_FOLDER_IDS }}
+        run: node generate-manifest.js
+
+      - name: 📝 Commit updated manifest
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Check if data files changed
+          if git diff --quiet data/; then
+            echo "No changes to data files."
+          else
+            git add data/
+            git commit -m "🔄 עדכון יומי — רענון קבצים מ-Google Drive ($(date '+%Y-%m-%d'))"
+            git push
+          fi
+
+      - name: 🚀 Trigger Pages deployment
+        if: success()
+        run: |
+          echo "Manifest updated successfully. GitHub Pages will auto-deploy."

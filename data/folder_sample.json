@@ -1,0 +1,88 @@
+{
+    "folderId": "sample",
+    "folderName": "📁 תיקייה לדוגמה",
+    "files": [
+        {
+            "id": "sample1",
+            "name": "הדגמה - סרטון לדוגמה.mp4",
+            "size": 52428800,
+            "mimeType": "video/mp4",
+            "modifiedTime": "2026-08-10T12:00:00Z",
+            "thumbnailLink": "",
+            "webViewLink": "https://drive.google.com/file/d/sample1/view",
+            "webContentLink": ""
+        },
+        {
+            "id": "sample2",
+            "name": "הקלטת ישיבה - יולי 2026.mkv",
+            "size": 157286400,
+            "mimeType": "video/x-matroska",
+            "modifiedTime": "2026-07-15T09:30:00Z",
+            "thumbnailLink": "",
+            "webViewLink": "https://drive.google.com/file/d/sample2/view",
+            "webContentLink": ""
+        },
+        {
+            "id": "sample3",
+            "name": "מצגת - סקירה רבעונית.pdf",
+            "size": 2097152,
+            "mimeType": "application/pdf",
+            "modifiedTime": "2026-08-08T14:00:00Z",
+            "thumbnailLink": "",
+            "webViewLink": "https://drive.google.com/file/d/sample3/view",
+            "webContentLink": ""
+        },
+        {
+            "id": "sample4",
+            "name": "שיר - אוסף מוזיקה.mp3",
+            "size": 8388608,
+            "mimeType": "audio/mpeg",
+            "modifiedTime": "2026-06-20T18:00:00Z",
+            "thumbnailLink": "",
+            "webViewLink": "https://drive.google.com/file/d/sample4/view",
+            "webContentLink": ""
+        },
+        {
+            "id": "sample5",
+            "name": "תמונה מהטיול.jpg",
+            "size": 3145728,
+            "mimeType": "image/jpeg",
+            "modifiedTime": "2026-08-01T08:00:00Z",
+            "thumbnailLink": "",
+            "webViewLink": "https://drive.google.com/file/d/sample5/view",
+            "webContentLink": ""
+        },
+        {
+            "id": "sample6",
+            "name": "הדרכה - שימוש במערכת.mp4",
+            "size": 104857600,
+            "mimeType": "video/mp4",
+            "modifiedTime": "2026-08-09T16:00:00Z",
+            "thumbnailLink": "",
+            "webViewLink": "https://drive.google.com/file/d/sample6/view",
+            "webContentLink": ""
+        },
+        {
+            "id": "sample7",
+            "name": "גיבוי - קבצי פרויקט.zip",
+            "size": 524288000,
+            "mimeType": "application/zip",
+            "modifiedTime": "2026-05-10T10:00:00Z",
+            "thumbnailLink": "",
+            "webViewLink": "https://drive.google.com/file/d/sample7/view",
+            "webContentLink": ""
+        },
+        {
+            "id": "sample8",
+            "name": "פרק 1 - מבוא לעולם התכנות.mp4",
+            "size": 262144000,
+            "mimeType": "video/mp4",
+            "modifiedTime": "2026-08-05T07:00:00Z",
+            "thumbnailLink": "",
+            "webViewLink": "https://drive.google.com/file/d/sample8/view",
+            "webContentLink": ""
+        }
+    ],
+    "count": 8,
+    "scrapedAt": "2026-08-10T00:00:00Z"
+}

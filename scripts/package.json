@@ -1,0 +1,13 @@
+{
+    "name": "drive-manifest-generator",
+    "version": "1.0.0",
+    "description": "Google Drive manifest generator — scans shared folders and produces JSON for the static site",
+    "private": true,
+    "type": "commonjs",
+    "engines": {
+        "node": ">=18"
+    },
+    "scripts": {
+        "generate": "node generate-manifest.js"
+    }
+}
