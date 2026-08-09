@@ -29,17 +29,24 @@ const DataStore = {
         }
     },
 
-    // Load files for a specific folder
+    // Load files for a specific folder (returns empty array if folder file missing)
     async loadFolderFiles(folderId) {
         const folderPath = `${CONFIG.dataBasePath}/folder_${folderId}.json`;
         try {
             const resp = await fetch(folderPath, { cache: 'no-cache' });
-            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            if (!resp.ok) {
+                // 404 = folder file not generated yet, that's OK — return empty
+                if (resp.status === 404) {
+                    console.warn(`Folder data not yet generated for ${folderId}`);
+                    return [];
+                }
+                throw new Error(`HTTP ${resp.status}`);
+            }
             const data = await resp.json();
             return this.processFiles(data.files || [], data.folderName || '');
         } catch (err) {
-            console.error(`Failed to load folder ${folderId}:`, err);
-            throw err;
+            console.warn(`Could not load folder ${folderId}:`, err.message);
+            return [];
         }
     },
 
