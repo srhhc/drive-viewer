@@ -4,64 +4,56 @@
       "id": "1uL6Uxkyva9ixQAIwR9xOHj3Oo5NfamM9",
       "name": "תיקייה 1uL6Uxkyva9ixQAIwR9xOHj3Oo5NfamM9",
       "fileCount": 0,
-      "error": "HTTP 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Requests from referer \\u003cempty\\u003e are blocked.\",\n    \"errors\": [\n      {\n        \"message\": \"Requests from referer \\u003cempty\\u003e are blocked.\""
+      "error": "HTTP 404: {\n  \"error\": {\n    \"code\": 404,\n    \"message\": \"File not found: 1uL6Uxkyva9ixQAIwR9xOHj3Oo5NfamM9.\",\n    \"errors\": [\n      {\n        \"message\": \"File not found: 1uL6Uxkyva9ixQAIwR9xOHj3Oo5NfamM9.\",\n  "
     },
     {
       "id": "1S7s5XJwk2BlrjyPG_AWNOCmm_P-SzcYz",
       "name": "תיקייה 1S7s5XJwk2BlrjyPG_AWNOCmm_P-SzcYz",
       "fileCount": 0,
-      "error": "HTTP 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Requests from referer \\u003cempty\\u003e are blocked.\",\n    \"errors\": [\n      {\n        \"message\": \"Requests from referer \\u003cempty\\u003e are blocked.\""
+      "error": "HTTP 404: {\n  \"error\": {\n    \"code\": 404,\n    \"message\": \"File not found: 1S7s5XJwk2BlrjyPG_AWNOCmm_P-SzcYz.\",\n    \"errors\": [\n      {\n        \"message\": \"File not found: 1S7s5XJwk2BlrjyPG_AWNOCmm_P-SzcYz.\",\n  "
     },
     {
       "id": "1gZXtZ_l_wumXONjZ5AZg0pZihq0c9bZi",
-      "name": "תיקייה 1gZXtZ_l_wumXONjZ5AZg0pZihq0c9bZi",
-      "fileCount": 0,
-      "error": "HTTP 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Requests from referer \\u003cempty\\u003e are blocked.\",\n    \"errors\": [\n      {\n        \"message\": \"Requests from referer \\u003cempty\\u003e are blocked.\""
+      "name": "סרטים וסדרות בדרייב",
+      "fileCount": 1562
     },
     {
       "id": "1gtFmX11I3KG88WAFvD5ZMsKa2JOcMJrg",
-      "name": "תיקייה 1gtFmX11I3KG88WAFvD5ZMsKa2JOcMJrg",
-      "fileCount": 0,
-      "error": "HTTP 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Requests from referer \\u003cempty\\u003e are blocked.\",\n    \"errors\": [\n      {\n        \"message\": \"Requests from referer \\u003cempty\\u003e are blocked.\""
+      "name": "דרייב-צפייה ללא הורדה ✨",
+      "fileCount": 6127
     },
     {
       "id": "14FZGJF_x3iyqypDv8tEEqCgqey7-kQDr",
-      "name": "תיקייה 14FZGJF_x3iyqypDv8tEEqCgqey7-kQDr",
-      "fileCount": 0,
-      "error": "HTTP 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Requests from referer \\u003cempty\\u003e are blocked.\",\n    \"errors\": [\n      {\n        \"message\": \"Requests from referer \\u003cempty\\u003e are blocked.\""
+      "name": "דרייב משודרות - מהדורות וחדשות מעודכנות ",
+      "fileCount": 3286
     },
     {
       "id": "1DJ39HcL0ATxe9eXsITfSXFVxpWSaRpvy",
-      "name": "תיקייה 1DJ39HcL0ATxe9eXsITfSXFVxpWSaRpvy",
-      "fileCount": 0,
-      "error": "HTTP 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Requests from referer \\u003cempty\\u003e are blocked.\",\n    \"errors\": [\n      {\n        \"message\": \"Requests from referer \\u003cempty\\u003e are blocked.\""
+      "name": "סדרות בקשות ",
+      "fileCount": 1431
     },
     {
       "id": "1CJK_zaSdbiMgybBvkYjxlt61oM4lXB_b",
-      "name": "תיקייה 1CJK_zaSdbiMgybBvkYjxlt61oM4lXB_b",
-      "fileCount": 0,
-      "error": "HTTP 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Requests from referer \\u003cempty\\u003e are blocked.\",\n    \"errors\": [\n      {\n        \"message\": \"Requests from referer \\u003cempty\\u003e are blocked.\""
+      "name": "סרטים וסדרות",
+      "fileCount": 13
     },
     {
       "id": "13xxSiKs1XJPQogpKiS7_RxFpDwW6k8rc",
-      "name": "תיקייה 13xxSiKs1XJPQogpKiS7_RxFpDwW6k8rc",
-      "fileCount": 0,
-      "error": "HTTP 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Requests from referer \\u003cempty\\u003e are blocked.\",\n    \"errors\": [\n      {\n        \"message\": \"Requests from referer \\u003cempty\\u003e are blocked.\""
+      "name": "המון סרטים הועלו בלעדית לנריה עטייה",
+      "fileCount": 2
     },
     {
       "id": "10AF489c3vvLdVIdAfEG8u0krALtRTCNl",
-      "name": "תיקייה 10AF489c3vvLdVIdAfEG8u0krALtRTCNl",
-      "fileCount": 0,
-      "error": "HTTP 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Requests from referer \\u003cempty\\u003e are blocked.\",\n    \"errors\": [\n      {\n        \"message\": \"Requests from referer \\u003cempty\\u003e are blocked.\""
+      "name": "סרטים וסדרות חדשים מומלצים✨",
+      "fileCount": 0
     },
     {
       "id": "1y3fbtGKxknJf3Jz-hsyH3LNcppbY5z4g",
-      "name": "תיקייה 1y3fbtGKxknJf3Jz-hsyH3LNcppbY5z4g",
-      "fileCount": 0,
-      "error": "HTTP 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Requests from referer \\u003cempty\\u003e are blocked.\",\n    \"errors\": [\n      {\n        \"message\": \"Requests from referer \\u003cempty\\u003e are blocked.\""
+      "name": "קבצים העולים לדרייב אין להעביר בלי עותק ✨",
+      "fileCount": 2258
     }
   ],
-  "lastUpdated": "2026-08-09T22:48:45.962Z",
-  "totalFiles": 0,
+  "lastUpdated": "2026-08-09T23:22:40.687Z",
+  "totalFiles": 14679,
   "generatedBy": "generate-manifest.js"
 }
