@@ -46,18 +46,15 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Stash any generated data, pull latest, then re-apply
-          git stash --include-untracked -- data/ 2>/dev/null || true
-          git pull --rebase origin main
-          git stash pop 2>/dev/null || true
+          git add data/
 
-          # Check if data files changed
-          if git diff --quiet data/ && git diff --cached --quiet data/; then
-            echo "No changes to data files."
+          # Only commit if data actually changed
+          if git diff --cached --quiet; then
+            echo "✅ No changes to data files."
           else
-            git add data/
             git commit -m "🔄 עדכון יומי — רענון קבצים מ-Google Drive ($(date '+%Y-%m-%d'))"
-            git push
+            # force-with-lease: safe because data/ is auto-generated and never hand-edited
+            git push --force-with-lease origin main
           fi
 
       - name: 🚀 Trigger Pages deployment
