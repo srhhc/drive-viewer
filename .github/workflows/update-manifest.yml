@@ -17,6 +17,11 @@ permissions:
   pages: write
   id-token: write
 
+# Prevent concurrent scans from conflicting on the git push
+concurrency:
+  group: drive-scan
+  cancel-in-progress: false
+
 jobs:
   update-manifest:
     runs-on: ubuntu-latest
