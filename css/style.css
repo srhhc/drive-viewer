@@ -1429,6 +1429,7 @@ img { max-width: 100%; }
     position: relative;
     width: 100%;
     max-width: calc((100vh - 180px) * 16 / 9);
+    max-width: calc((100dvh - 180px) * 16 / 9);
     aspect-ratio: 16 / 9;
     background: #000;
     margin: auto;
@@ -1802,6 +1803,16 @@ img { max-width: 100%; }
     /* Modal */
     .modal-overlay { padding: 0; }
     .modal-container { border-radius: 0; max-height: 100vh; }
+
+    /* Player header: wrap to extra rows so EVERY button stays visible and
+       clickable on narrow screens (the actions row is ~400px wide).
+       flex-shrink:1 + min-width:0 lets the actions box shrink to the
+       available width so its own wrap can actually kick in. */
+    .modal-header { flex-wrap: wrap; gap: 8px; }
+    .modal-actions { flex-shrink: 1; flex-wrap: wrap; min-width: 0; }
+    #playerDownload .dl-label { display: none; }
+    #playerDownload { padding: 8px 11px; }
+    .player-wrapper { max-width: calc((100dvh - 200px) * 16 / 9); }
 
     /* Disclaimer */
     .disclaimer-content { flex-direction: column; align-items: flex-start; gap: 6px; }

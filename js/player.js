@@ -15,6 +15,7 @@ const VideoPlayer = {
     nextBtn: null,
     counter: null,
     shareBtn: null,
+    openDriveBtn: null,
     minimizeBtn: null,
     sizeBtn: null,
     fullscreenBtn: null,
@@ -39,6 +40,7 @@ const VideoPlayer = {
         this.nextBtn = document.getElementById('playerNext');
         this.counter = document.getElementById('playerCounter');
         this.shareBtn = document.getElementById('playerShare');
+        this.openDriveBtn = document.getElementById('playerOpenDrive');
         this.minimizeBtn = document.getElementById('playerMinimize');
         this.sizeBtn = document.getElementById('playerSize');
         this.fullscreenBtn = document.getElementById('playerFullscreen');
@@ -110,6 +112,7 @@ const VideoPlayer = {
 
         this.downloadBtn.href = getDriveDownloadUrl(file.id);
         this.shareBtn.href = 'https://wa.me/?text=' + encodeURIComponent(file.name + '\n' + getDriveViewUrl(file.id));
+        if (this.openDriveBtn) this.openDriveBtn.href = getDriveViewUrl(file.id);
 
         // Load the new file's preview (works both in modal and mini bar)
         this.frame.src = getDrivePreviewUrl(file.id);
@@ -162,16 +165,33 @@ const VideoPlayer = {
 
         const doc = document;
         if (doc.fullscreenElement || doc.webkitFullscreenElement) {
-            (doc.exitFullscreen || doc.webkitExitFullscreen || function() {}).call(doc);
-        } else {
-            const req = wrapper.requestFullscreen || wrapper.webkitRequestFullscreen;
-            if (req) {
-                req.call(wrapper);
-            } else {
-                if (window.UI && typeof UI.showToast === 'function') {
-                    UI.showToast('מסך מלא אינו נתמך בדפדפן זה');
-                }
-            }
+            const exit = doc.exitFullscreen || doc.webkitExitFullscreen;
+            if (exit) exit.call(doc);
+            return;
+        }
+
+        const req = wrapper.requestFullscreen || wrapper.webkitRequestFullscreen;
+        if (!req) {
+            this._fsUnsupported();
+            return;
+        }
+        let p = null;
+        try { p = req.call(wrapper); } catch (e) { p = null; }
+        if (p && typeof p.catch === 'function') {
+            p.catch(() => this._fsUnsupported());
+        }
+    },
+
+    // Fallback when the browser refuses/unsupported fullscreen (e.g. iOS Safari):
+    // widen the player to the screen instead of failing silently.
+    _fsUnsupported() {
+        if (this.sizeIndex !== this.sizes.length - 1) {
+            this.sizeIndex = this.sizes.length - 1; // 'wide'
+            try { localStorage.setItem(this.sizeKey, this.sizes[this.sizeIndex]); } catch (e) {}
+            this._applySize();
+        }
+        if (window.UI && typeof UI.showToast === 'function') {
+            UI.showToast('מסך מלא לא נתמך בדפדפן זה — הנגן הוגדל לרוחב מלא');
         }
     },
 
@@ -286,6 +306,12 @@ const VideoPlayer = {
     },
 
     close() {
+        // Exit fullscreen if active
+        const doc = document;
+        if (doc.fullscreenElement || doc.webkitFullscreenElement) {
+            const exit = doc.exitFullscreen || doc.webkitExitFullscreen;
+            if (exit) exit.call(doc);
+        }
         // Stop playback & clean up
         if (this.isMinimized) {
             this.mini.style.display = 'none';

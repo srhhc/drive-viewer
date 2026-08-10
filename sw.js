@@ -5,7 +5,7 @@
    stale-while-revalidate for data files.
    ============================================ */
 
-const CACHE_VERSION = 'drive-viewer-v3';
+const CACHE_VERSION = 'drive-viewer-v4';
 const APP_SHELL = [
     './',
     './index.html',
@@ -69,35 +69,24 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // Navigations (HTML): network-first so new versions appear immediately,
-    // cache fallback for offline. JS/CSS: cache-first with revalidate.
+    // HTML/JS/CSS (same-origin, non-data): network-first so the newest code is
+    // always served when online; cache is the offline fallback. This guarantees
+    // that new features/buttons reach users immediately (no stale-code window).
     if (url.origin === self.location.origin) {
-        if (event.request.mode === 'navigate') {
-            event.respondWith(
-                fetch(event.request)
-                    .then((response) => {
+        event.respondWith(
+            fetch(event.request)
+                .then((response) => {
+                    if (response && response.ok) {
                         const clone = response.clone();
                         caches.open(CACHE_VERSION).then((cache) => cache.put(event.request, clone));
-                        return response;
-                    })
-                    .catch(() => caches.match(event.request).then((cached) => cached || caches.match('./index.html')))
-            );
-            return;
-        }
-        // JS/CSS: stale-while-revalidate so code updates propagate on next visit
-        event.respondWith(
-            caches.open(CACHE_VERSION).then(async (cache) => {
-                const cached = await cache.match(event.request);
-                const network = fetch(event.request)
-                    .then((response) => {
-                        if (response && response.ok) {
-                            cache.put(event.request, response.clone());
-                        }
-                        return response;
-                    })
-                    .catch(() => cached);
-                return cached || network;
-            })
+                    }
+                    return response;
+                })
+                .catch(() => caches.match(event.request).then((cached) => {
+                    if (cached) return cached;
+                    if (event.request.mode === 'navigate') return caches.match('./index.html');
+                    return undefined;
+                }))
         );
     }
 });
