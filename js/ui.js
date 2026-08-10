@@ -28,6 +28,7 @@ const UI = {
 
             breadcrumbHome: document.getElementById('breadcrumb').querySelector('.breadcrumb-home'),
             breadcrumbPath: document.getElementById('breadcrumbPath'),
+            recentBtn: document.getElementById('recentBtn'),
 
             resultsCount: document.getElementById('resultsCount'),
             sortSelect: document.getElementById('sortSelect'),
@@ -89,6 +90,7 @@ const UI = {
         this.els.themeToggle.addEventListener('click', () => this.toggleTheme());
         this.els.disclaimerClose.addEventListener('click', () => this.dismissDisclaimer());
         this.els.breadcrumbHome.addEventListener('click', () => App.goHome());
+        this.els.recentBtn.addEventListener('click', () => App.showRecent());
         this.els.refreshBtn.addEventListener('click', () => App.refresh());
 
         this._setupScrollToTop();
@@ -353,7 +355,7 @@ const UI = {
             ? '<div class="file-card-path" title="' + es(file.path) + '"><i class="fas fa-folder"></i> ' + es(file.path) + '</div>'
             : '';
 
-        const folderChip = (App.isSearchMode && file.folderName)
+        const folderChip = ((App.isSearchMode || App.recentMode) && file.folderName)
             ? '<div class="file-card-folder" title="' + es(file.folderName) + '"><i class="fas fa-drive"></i> ' + es(file.folderName) + '</div>'
             : '';
 

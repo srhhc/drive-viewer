@@ -99,7 +99,47 @@ async function main() {
         generatedBy: 'generate-manifest.js'
     }, null, 2));
 
+    // Build search index (lightweight — for fast client-side search)
+    const searchEntries = [];
+    const recentCandidates = [];
+    for (const folder of allFolders) {
+        const folderFile = path.join(OUTPUT_DIR, 'folder_' + folder.id + '.json');
+        if (!fs.existsSync(folderFile)) continue;
+        let data;
+        try { data = JSON.parse(fs.readFileSync(folderFile, 'utf8')); } catch (e) { continue; }
+        const folderName = data.folderName || folder.name;
+        for (const f of data.files || []) {
+            searchEntries.push({
+                id: f.id,
+                name: f.name,
+                mimeType: f.mimeType || '',
+                size: f.size || 0,
+                modifiedTime: f.modifiedTime || '',
+                createdTime: f.createdTime || '',
+                thumbnailLink: f.thumbnailLink || '',
+                path: f.path || '',
+                folderId: folder.id,
+                folderName: folderName
+            });
+            recentCandidates.push(searchEntries[searchEntries.length - 1]);
+        }
+    }
+
+    // recent.json — newest files across all folders
+    recentCandidates.sort((a, b) => new Date(b.createdTime || b.modifiedTime) - new Date(a.createdTime || a.modifiedTime));
+    fs.writeFileSync(path.join(OUTPUT_DIR, 'recent.json'), JSON.stringify({
+        lastUpdated: new Date().toISOString(),
+        files: recentCandidates.slice(0, 60)
+    }, null, 2));
+
+    // search_index.json — compact search data
+    fs.writeFileSync(path.join(OUTPUT_DIR, 'search_index.json'), JSON.stringify({
+        lastUpdated: new Date().toISOString(),
+        files: searchEntries
+    }, null, 2));
+
     console.log('\nDone! ' + totalFiles.toLocaleString() + ' total files across ' + allFolders.length + ' folders.');
+    console.log('   search_index.json: ' + searchEntries.length.toLocaleString() + ' entries');
 }
 
 // --- Authentication ---

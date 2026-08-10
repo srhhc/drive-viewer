@@ -73,7 +73,7 @@ const DataStore = {
                 webViewLink: f.webViewLink || '',
                 webContentLink: f.webContentLink || '',
                 path: f.path || '',
-                folderName: folderName,
+                folderName: f.folderName || folderName,
                 durationMs: parseInt(f.durationMs, 10) || 0,
                 width: f.width || 0,
                 height: f.height || 0,
@@ -138,6 +138,54 @@ const DataStore = {
         }
         this.allFiles = allFiles;
         return allFiles;
+    },
+
+    // Load the pre-built search index (fast, single file)
+    async loadSearchIndex() {
+        const resp = await fetch(CONFIG.dataBasePath + '/search_index.json', { cache: 'no-cache' });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const data = await resp.json();
+        const files = (data.files || []).map(f => ({
+            id: f.id,
+            name: f.name,
+            size: parseInt(f.size, 10) || 0,
+            mimeType: f.mimeType || '',
+            modifiedTime: f.modifiedTime || '',
+            createdTime: f.createdTime || '',
+            thumbnailLink: f.thumbnailLink || '',
+            webViewLink: '',
+            webContentLink: '',
+            path: f.path || '',
+            folderName: f.folderName || '',
+            durationMs: 0,
+            width: 0,
+            height: 0
+        }));
+        return this.processFiles(files, '');
+    },
+
+    // Load 'what's new' — newest files across all folders
+    async loadRecentFiles() {
+        const resp = await fetch(CONFIG.dataBasePath + '/recent.json', { cache: 'no-cache' });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const data = await resp.json();
+        const files = (data.files || []).map(f => ({
+            id: f.id,
+            name: f.name,
+            size: parseInt(f.size, 10) || 0,
+            mimeType: f.mimeType || '',
+            modifiedTime: f.modifiedTime || '',
+            createdTime: f.createdTime || '',
+            thumbnailLink: f.thumbnailLink || '',
+            webViewLink: '',
+            webContentLink: '',
+            path: f.path || '',
+            folderName: f.folderName || '',
+            durationMs: 0,
+            width: 0,
+            height: 0
+        }));
+        return this.processFiles(files, '');
     },
 
     // Get files for current folder (from cache or load)

@@ -64,6 +64,28 @@ const App = {
         }
     },
 
+    /* --- What's new view --- */
+    recentMode: false,
+
+    async showRecent() {
+        UI.showState('loading');
+        try {
+            const files = await DataStore.loadRecentFiles();
+            this.recentMode = true;
+            this.isSearchMode = false;
+            this.searchQuery = '';
+            UI.renderFolderTree(null, null, '');
+            UI.renderBreadcrumb(null, '');
+            document.getElementById('breadcrumb').insertAdjacentHTML('beforeend',
+                '<span class="breadcrumb-separator">/</span><span class="breadcrumb-recent"><i class="fas fa-bolt"></i> מה חדש באתר</span>');
+            UI.matchHighlights = {};
+            this.lastSearchFiles = files;
+            this.displayFiles(files, false);
+        } catch (err) {
+            UI.showError('לא ניתן לטעון את הקבצים החדשים: ' + err.message);
+        }
+    },
+
     playFile(file) {
         // Open in player with the current view as the queue
         VideoPlayer.open(file, this.currentDisplayFiles);
@@ -207,6 +229,7 @@ const App = {
 
         this.searchQuery = '';
         this.isSearchMode = false;
+        this.recentMode = false;
         this.currentPath = '';
 
         UI.showState('loading');
@@ -292,10 +315,17 @@ const App = {
         if (!SearchEngine.isIndexReady) {
             UI.showState('loading');
             const loadingText = UI.els.loadingState.querySelector('span');
-            if (loadingText) loadingText.textContent = 'בונה אינדקס חיפוש — פעם ראשונה זה לוקח כמה שניות...';
+            if (loadingText) loadingText.textContent = 'מכין חיפוש...';
             try {
-                const allFiles = await DataStore.loadAllFiles();
-                SearchEngine.buildIndex(allFiles);
+                let searchFiles = null;
+                try {
+                    searchFiles = await DataStore.loadSearchIndex();
+                } catch (e) {
+                    // Fall back to loading all folder files
+                    searchFiles = await DataStore.loadAllFiles();
+                }
+                SearchEngine.buildIndex(searchFiles);
+                DataStore.allFiles = searchFiles;
             } catch (err) {
                 UI.showError('שגיאה בבניית אינדקס החיפוש.');
                 return;
@@ -346,6 +376,7 @@ const App = {
     clearSearch() {
         this.searchQuery = '';
         this.isSearchMode = false;
+        this.recentMode = false;
         UI.els.searchInput.value = '';
         UI.els.searchClear.style.display = 'none';
         UI.matchHighlights = {};
@@ -358,7 +389,9 @@ const App = {
     /* --- Rendering --- */
     renderCurrentFiles() {
         let files;
-        if (this.isSearchMode) {
+        if (this.recentMode) {
+            files = this.lastSearchFiles;
+        } else if (this.isSearchMode) {
             files = this.searchQuery ? this.lastSearchFiles : [];
         } else {
             files = DataStore.currentFiles;
@@ -367,7 +400,7 @@ const App = {
                 files = files.filter(f => f.path === this.currentPath || f.path.startsWith(prefix));
             }
         }
-        this.displayFiles(files, this.isSearchMode);
+        this.displayFiles(files, this.isSearchMode || this.recentMode);
     },
 
     displayFiles(files, isFiltered) {
