@@ -16,6 +16,8 @@ const VideoPlayer = {
     counter: null,
     shareBtn: null,
     minimizeBtn: null,
+    sizeBtn: null,
+    fullscreenBtn: null,
     mini: null,             // mini-player container
     miniFrameWrap: null,
     miniTitle: null,
@@ -24,6 +26,9 @@ const VideoPlayer = {
     queue: [],              // files in current view order
     queueIndex: -1,
     isMinimized: false,
+    sizeKey: 'drive-viewer-player-size',
+    sizes: ['small', 'medium', 'large', 'wide'],
+    sizeIndex: 1,
 
     init() {
         this.modal = document.getElementById('playerModal');
@@ -35,6 +40,8 @@ const VideoPlayer = {
         this.counter = document.getElementById('playerCounter');
         this.shareBtn = document.getElementById('playerShare');
         this.minimizeBtn = document.getElementById('playerMinimize');
+        this.sizeBtn = document.getElementById('playerSize');
+        this.fullscreenBtn = document.getElementById('playerFullscreen');
 
         this.mini = document.getElementById('miniPlayer');
         this.miniFrameWrap = document.getElementById('miniPlayerFrameWrap');
@@ -60,6 +67,15 @@ const VideoPlayer = {
         this.prevBtn.addEventListener('click', () => this.prev());
         this.nextBtn.addEventListener('click', () => this.next());
         this.minimizeBtn.addEventListener('click', () => this.minimize());
+        this.sizeBtn.addEventListener('click', () => this.cycleSize());
+        this.fullscreenBtn.addEventListener('click', () => this.toggleFullscreen());
+
+        // Restore saved player window size
+        this._loadSize();
+
+        // Sync fullscreen icon on enter/exit
+        document.addEventListener('fullscreenchange', () => this._updateFullscreenIcon());
+        document.addEventListener('webkitfullscreenchange', () => this._updateFullscreenIcon());
 
         // Mini-player controls
         document.getElementById('miniPlayerPrev').addEventListener('click', () => this.prev());
@@ -110,6 +126,60 @@ const VideoPlayer = {
 
         this._updateNavState();
         this._recordHistory(file);
+    },
+
+    /* --- Player window size control --- */
+    _applySize() {
+        const container = this.modal.querySelector('.modal-container');
+        if (!container) return;
+        container.classList.remove(...this.sizes.map(s => 'size-' + s));
+        container.classList.add('size-' + this.sizes[this.sizeIndex]);
+    },
+
+    _loadSize() {
+        try {
+            const saved = localStorage.getItem(this.sizeKey);
+            const idx = this.sizes.indexOf(saved);
+            if (idx >= 0) this.sizeIndex = idx;
+        } catch (e) {}
+        this._applySize();
+    },
+
+    cycleSize() {
+        this.sizeIndex = (this.sizeIndex + 1) % this.sizes.length;
+        try { localStorage.setItem(this.sizeKey, this.sizes[this.sizeIndex]); } catch (e) {}
+        this._applySize();
+        const labels = { small: 'גודל: קטן', medium: 'גודל: בינוני', large: 'גודל: גדול', wide: 'גודל: רחב' };
+        if (window.UI && typeof UI.showToast === 'function') {
+            UI.showToast(labels[this.sizes[this.sizeIndex]]);
+        }
+    },
+
+    /* --- Fullscreen --- */
+    toggleFullscreen() {
+        const wrapper = this.modal.querySelector('.player-wrapper');
+        if (!wrapper) return;
+
+        const doc = document;
+        if (doc.fullscreenElement || doc.webkitFullscreenElement) {
+            (doc.exitFullscreen || doc.webkitExitFullscreen || function() {}).call(doc);
+        } else {
+            const req = wrapper.requestFullscreen || wrapper.webkitRequestFullscreen;
+            if (req) {
+                req.call(wrapper);
+            } else {
+                if (window.UI && typeof UI.showToast === 'function') {
+                    UI.showToast('מסך מלא אינו נתמך בדפדפן זה');
+                }
+            }
+        }
+    },
+
+    _updateFullscreenIcon() {
+        const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+        if (this.fullscreenBtn) {
+            this.fullscreenBtn.innerHTML = isFs ? '<i class="fas fa-compress"></i>' : '<i class="fas fa-expand"></i>';
+        }
     },
 
     /* --- Mini player --- */
