@@ -446,6 +446,23 @@ const App = {
         UI.visibleCount = Math.min(CONFIG.initialBatch, sorted.length);
         UI.showState('content');
         UI.renderFiles(sorted, isFiltered);
+        this._updatePlayAllVisibility();
+    },
+
+    /* --- Play All (queue from first playable file) --- */
+    _updatePlayAllVisibility() {
+        const hasPlayable = this.currentDisplayFiles.some(f => f.isVideo || f.isAudio);
+        UI.els.playAllBtn.style.display = hasPlayable ? '' : 'none';
+    },
+
+    playAll() {
+        const playable = this.currentDisplayFiles.filter(f => f.isVideo || f.isAudio);
+        if (playable.length === 0) {
+            UI.showToast('אין קבצים לנגינה בתצוגה זו');
+            return;
+        }
+        VideoPlayer.open(playable[0], playable);
+        UI.showToast('תור ניגון: ' + playable.length + ' קבצים');
     },
 
     loadMore() {

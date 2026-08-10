@@ -5,7 +5,7 @@
    stale-while-revalidate for data files.
    ============================================ */
 
-const CACHE_VERSION = 'drive-viewer-v1';
+const CACHE_VERSION = 'drive-viewer-v2';
 const APP_SHELL = [
     './',
     './index.html',
@@ -68,8 +68,21 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // App shell & other same-origin: cache-first, fall back to network
+    // Navigations (HTML): network-first so new versions appear immediately,
+    // cache fallback for offline. JS/CSS: cache-first with revalidate.
     if (url.origin === self.location.origin) {
+        if (event.request.mode === 'navigate') {
+            event.respondWith(
+                fetch(event.request)
+                    .then((response) => {
+                        const clone = response.clone();
+                        caches.open(CACHE_VERSION).then((cache) => cache.put(event.request, clone));
+                        return response;
+                    })
+                    .catch(() => caches.match(event.request).then((cached) => cached || caches.match('./index.html')))
+            );
+            return;
+        }
         event.respondWith(
             caches.match(event.request).then((cached) => {
                 if (cached) return cached;

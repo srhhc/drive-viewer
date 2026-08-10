@@ -12,6 +12,7 @@ const VideoPlayer = {
     prevBtn: null,
     nextBtn: null,
     counter: null,
+    shareBtn: null,
     currentFile: null,
     queue: [],          // files in current view order
     queueIndex: -1,
@@ -24,6 +25,7 @@ const VideoPlayer = {
         this.prevBtn = document.getElementById('playerPrev');
         this.nextBtn = document.getElementById('playerNext');
         this.counter = document.getElementById('playerCounter');
+        this.shareBtn = document.getElementById('playerShare');
 
         document.getElementById('playerClose').addEventListener('click', () => this.close());
 
@@ -67,6 +69,7 @@ const VideoPlayer = {
         this.title.appendChild(textSpan);
 
         this.downloadBtn.href = getDriveDownloadUrl(file.id);
+        this.shareBtn.href = 'https://wa.me/?text=' + encodeURIComponent(file.name + '\n' + getDriveViewUrl(file.id));
         this.frame.src = getDrivePreviewUrl(file.id);
         this.modal.style.display = 'flex';
         document.body.style.overflow = 'hidden';

@@ -680,6 +680,18 @@ img { max-width: 100%; }
 }
 .btn-download:hover { background: #16a34a; color: white; text-decoration: none; }
 
+.btn-play-all {
+    background: var(--accent);
+    color: white;
+    white-space: nowrap;
+}
+.btn-play-all:hover { background: var(--accent-hover); color: white; }
+
+#playerShare {
+    color: #25d366;
+}
+#playerShare:hover { background: var(--bg-hover); }
+
 /* ============================================
    FILE GRID
    ============================================ */

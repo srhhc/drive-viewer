@@ -52,6 +52,7 @@ const UI = {
 
             refreshBtn: document.getElementById('refreshBtn'),
             copyAllBtn: document.getElementById('copyAllBtn'),
+            playAllBtn: document.getElementById('playAllBtn'),
             lastUpdated: document.getElementById('lastUpdated')
         };
 
@@ -89,6 +90,7 @@ const UI = {
         this.els.loadMoreBtn.addEventListener('click', () => App.loadMore());
 
         this.els.copyAllBtn.addEventListener('click', () => App.copyAllLinks());
+        this.els.playAllBtn.addEventListener('click', () => App.playAll());
 
         this.els.themeToggle.addEventListener('click', () => this.toggleTheme());
         this.els.disclaimerClose.addEventListener('click', () => this.dismissDisclaimer());
