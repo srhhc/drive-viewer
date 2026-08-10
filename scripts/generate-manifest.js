@@ -81,7 +81,7 @@ async function main() {
             totalFiles += result.files.length;
             console.log('   ✅ ' + result.name + ': ' + result.files.length.toLocaleString() + ' files');
         } catch (err) {
-            console.error('   ❌ Failed: ' + err.message);
+            console.error(describeFolderError(folderId, err));
             allFolders.push({
                 id: folderId,
                 name: 'תיקייה ' + folderId,
@@ -313,6 +313,23 @@ async function apiRequest(endpoint, retries = 3) {
             await sleep(delay);
         }
     }
+}
+
+/** Explain a Drive API 404 in plain Hebrew — it means the scan account
+ *  (the one behind DRIVE_REFRESH_TOKEN) cannot see this folder at all. */
+function describeFolderError(folderId, err) {
+    const msg = String(err && err.message || err || '');
+    const is404 = /404|File not found/i.test(msg);
+    const is403 = /403|forbidden|Forbidden/i.test(msg);
+    if (is404) {
+        return '🔒 התיקייה ' + folderId + ' לא נגישה לחשבון הסורק (DRIVE_REFRESH_TOKEN).\n' +
+               '   כנראה היא משותפת רק עם חשבון גוגל אחר שלך (למשל זה שפותח בדפדפן אנונימי).\n' +
+               '   פתרון: מחשבון הגוגל שרואה אותה, פתח את התיקייה → שיתוף → הוסף את srhhc6@gmail.com כצופה.';
+    }
+    if (is403) {
+        return '⛔ הרשאה נדחתה לתיקייה ' + folderId + ' — חשבון הסורק לא יכול לקרוא אותה.';
+    }
+    return '❌ שגיאה בסריקת התיקייה ' + folderId + ': ' + msg;
 }
 
 function sleep(ms) {
