@@ -23,8 +23,10 @@ const UI = {
             sidebarOverlay: document.getElementById('sidebarOverlay'),
             menuToggle: document.getElementById('menuToggle'),
 
+            searchContainer: document.getElementById('searchContainer'),
             searchInput: document.getElementById('searchInput'),
             searchClear: document.getElementById('searchClear'),
+            searchToggle: document.getElementById('searchToggle'),
 
             breadcrumb: document.getElementById('breadcrumb'),
             breadcrumbHome: document.getElementById('breadcrumb').querySelector('.breadcrumb-home'),
@@ -75,6 +77,18 @@ const UI = {
 
         this.els.searchInput.addEventListener('input', () => App.handleSearchInput());
         this.els.searchClear.addEventListener('click', () => App.clearSearch());
+        this.els.searchToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleSearch();
+        });
+
+        // Close the mobile search box when tapping outside of it
+        document.addEventListener('click', (e) => {
+            if (!this.els.searchContainer.classList.contains('expanded')) return;
+            if (this.els.searchContainer.contains(e.target)) return;
+            if (this.els.searchToggle.contains(e.target)) return;
+            this.els.searchContainer.classList.remove('expanded');
+        });
 
         this.els.sortSelect.addEventListener('change', () => {
             this.sortMode = this.els.sortSelect.value;
@@ -103,6 +117,20 @@ const UI = {
         this.els.refreshBtn.addEventListener('click', () => App.refresh());
 
         this._setupScrollToTop();
+    },
+
+    /* --- Mobile search --- */
+    openSearch() {
+        this.els.searchContainer.classList.add('expanded');
+        this.els.searchInput.focus();
+    },
+
+    toggleSearch() {
+        if (this.els.searchContainer.classList.contains('expanded')) {
+            this.els.searchContainer.classList.remove('expanded');
+        } else {
+            this.openSearch();
+        }
     },
 
     /* --- Sidebar --- */

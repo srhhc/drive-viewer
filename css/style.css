@@ -201,6 +201,9 @@ img { max-width: 100%; }
     flex-shrink: 0;
 }
 
+/* Search toggle — only visible on mobile (desktop always shows the box) */
+.search-toggle { display: none; }
+
 .btn-icon {
     display: flex;
     align-items: center;
@@ -1732,6 +1735,8 @@ img { max-width: 100%; }
     .header-inner { gap: 8px; padding: 0 12px; }
 
     .menu-toggle { display: flex; }
+
+    .search-toggle { display: flex; }
 
     .logo h1 { font-size: 1.05rem; }
 

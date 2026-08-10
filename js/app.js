@@ -51,10 +51,10 @@ const App = {
             const tag = (e.target.tagName || '').toLowerCase();
             if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
 
-            // '/' focuses search
+            // '/' focuses search (also opens the box on mobile)
             if (e.key === '/' && !e.ctrlKey && !e.metaKey) {
                 e.preventDefault();
-                UI.els.searchInput.focus();
+                UI.openSearch();
                 return;
             }
             // 'h' or 'g'+'h' → home
