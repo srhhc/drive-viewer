@@ -141,12 +141,16 @@ const App = {
 
         if (!SearchEngine.isIndexReady) {
             UI.showState('loading');
+            const loadingText = UI.els.loadingState.querySelector('span');
+            if (loadingText) loadingText.textContent = 'בונה אינדקס חיפוש — פעם ראשונה זה לוקח כמה שניות...';
             try {
                 const allFiles = await DataStore.loadAllFiles();
                 SearchEngine.buildIndex(allFiles);
             } catch (err) {
                 UI.showError('שגיאה בבניית אינדקס החיפוש.');
                 return;
+            } finally {
+                if (loadingText) loadingText.textContent = 'טוען קבצים...';
             }
         }
 

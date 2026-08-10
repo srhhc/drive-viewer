@@ -284,7 +284,35 @@ const UI = {
             if (playBtn) {
                 playBtn.addEventListener('click', (e) => { e.stopPropagation(); VideoPlayer.open(file); });
             }
+
+            const copyBtn = card.querySelector('.btn-copy');
+            if (copyBtn) {
+                copyBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this._copyToClipboard(file, copyBtn);
+                });
+            }
         });
+    },
+
+    _copyToClipboard(file, btn) {
+        const url = file.webViewLink || getDrivePreviewUrl(file.id);
+        const flash = () => {
+            const old = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i>';
+            setTimeout(() => { if (btn.isConnected) btn.innerHTML = old; }, 1200);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(flash, flash);
+        } else {
+            const ta = document.createElement('textarea');
+            ta.value = url;
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand('copy'); } catch (e) {}
+            document.body.removeChild(ta);
+            flash();
+        }
     },
 
     _highlightName(file) {
@@ -339,6 +367,7 @@ const UI = {
             + '</div>'
             + '<div class="file-card-actions">'
             + (file.isVideo ? '<button class="btn-play"><i class="fas fa-play"></i> צפה</button>' : '')
+            + '<button class="btn-copy" title="העתק קישור"><i class="fas fa-link"></i></button>'
             + '<a class="btn-dl" href="' + getDriveDownloadUrl(file.id) + '" target="_blank" rel="noopener"><i class="fas fa-download"></i> הורד</a>'
             + '</div></div>';
     },
@@ -365,6 +394,14 @@ const UI = {
             if (playBtn) {
                 playBtn.addEventListener('click', (e) => { e.stopPropagation(); VideoPlayer.open(file); });
             }
+
+            const copyBtn = row.querySelector('.btn-copy');
+            if (copyBtn) {
+                copyBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this._copyToClipboard(file, copyBtn);
+                });
+            }
         });
     },
 
@@ -377,6 +414,7 @@ const UI = {
             + '<span class="file-list-date">' + file.dateFormatted + '</span>'
             + '<div class="file-list-actions">'
             + (file.isVideo ? '<button class="btn-play"><i class="fas fa-play"></i> צפה</button>' : '')
+            + '<button class="btn-copy" title="העתק קישור"><i class="fas fa-link"></i></button>'
             + '<a href="' + getDriveDownloadUrl(file.id) + '" target="_blank" rel="noopener"><i class="fas fa-download"></i></a>'
             + '</div></div>';
     },
