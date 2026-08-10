@@ -120,6 +120,8 @@ const VideoPlayer = {
                 isVideo: !!file.isVideo,
                 isAudio: !!file.isAudio,
                 mimeType: file.mimeType,
+                thumbnailLink: file.thumbnailLink || '',
+                folderName: file.folderName || '',
                 ts: Date.now()
             };
             const filtered = history.filter(h => h.id !== file.id);

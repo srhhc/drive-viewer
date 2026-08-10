@@ -416,12 +416,22 @@ const App = {
         detail.className = 'series-detail';
 
         const allEpisodes = [];
+        // Flatten episodes in order for 'continue' logic
+        for (const season of series.seasons) {
+            for (const ep of season.episodes) allEpisodes.push(ep.file);
+        }
+        const nextUnwatched = allEpisodes.find(f => !SeriesEngine.isWatched(f.id));
+        const hasWatched = allEpisodes.some(f => SeriesEngine.isWatched(f.id));
+
         let detailHtml = '<div class="series-detail-header">'
             + '<div class="series-detail-thumb">' + (series.thumbnail ? '<img src="' + getImageUrl({ thumbnailLink: series.thumbnail }, 480) + '" alt="">' : '<i class="fas fa-tv"></i>') + '</div>'
             + '<div class="series-detail-info">'
             + '<h2>' + this._esc(series.name) + '</h2>'
             + '<p class="series-detail-meta"><i class="fas fa-layer-group"></i> ' + series.seasonCount + ' עונות · <i class="fas fa-clapperboard"></i> ' + series.totalEpisodes + ' פרקים</p>'
             + '<div class="series-detail-actions">'
+            + (nextUnwatched && hasWatched
+                ? '<button class="btn btn-primary btn-sm" id="seriesContinue"><i class="fas fa-forward"></i> המשך מהפרק הבא</button>'
+                : '')
             + '<button class="btn btn-primary btn-sm" id="seriesPlayAll"><i class="fas fa-play"></i> נגן הכל ברצף</button>'
             + '<button class="btn btn-sm" id="seriesMarkAll"><i class="fas fa-check-double"></i> סמן הכל כנצפה</button>'
             + '</div></div></div>';
@@ -433,7 +443,9 @@ const App = {
             for (const ep of season.episodes) {
                 const watched = SeriesEngine.isWatched(ep.file.id);
                 allEpisodes.push(ep.file);
-                detailHtml += '<div class="series-episode" data-id="' + ep.file.id + '" data-watched="' + (watched ? '1' : '0') + '">'
+                const isNext = (nextUnwatched && ep.file.id === nextUnwatched.id) ? ' series-episode-next' : '';
+                detailHtml += '<div class="series-episode' + isNext + '" data-id="' + ep.file.id + '" data-watched="' + (watched ? '1' : '0') + '">'
+                    + (isNext ? '<span class="series-next-badge"><i class="fas fa-play"></i> הבא</span>' : '')
                     + '<button class="series-ep-watched" title="סמן כנצפה"><i class="fas ' + (watched ? 'fa-check-circle' : 'fa-circle') + '"></i></button>'
                     + '<span class="series-ep-num">' + ep.episode + '</span>'
                     + '<span class="series-ep-name" title="' + this._esc(ep.file.name) + '">' + this._esc(ep.file.name) + '</span>'
@@ -484,6 +496,14 @@ const App = {
             playAllBtn.addEventListener('click', () => {
                 const playable = allEpisodes.filter(f => f.isVideo || f.isAudio);
                 if (playable.length > 0) VideoPlayer.open(playable[0], playable);
+            });
+        }
+        const continueBtn = document.getElementById('seriesContinue');
+        if (continueBtn && nextUnwatched) {
+            continueBtn.addEventListener('click', () => {
+                const playable = allEpisodes.filter(f => f.isVideo || f.isAudio);
+                VideoPlayer.open(nextUnwatched, playable);
+                SeriesEngine.markWatched(nextUnwatched.id);
             });
         }
         const markAllBtn = document.getElementById('seriesMarkAll');
@@ -693,6 +713,10 @@ const App = {
     _refreshView() {
         const folderId = DataStore.currentFolderId;
         if (!folderId) return;
+
+        // Remove any lingering series detail view
+        const oldDetail = document.getElementById('seriesDetail');
+        if (oldDetail) oldDetail.remove();
 
         UI.renderFolderTree(folderId, this.folderTree, this.currentPath);
         UI.renderBreadcrumb(folderId, this.currentPath);

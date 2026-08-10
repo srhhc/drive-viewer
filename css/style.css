@@ -1134,6 +1134,22 @@ img { max-width: 100%; }
 .series-episode:hover { background: var(--bg-hover); }
 .series-episode[data-watched="1"] .series-ep-name { color: var(--text-muted); text-decoration: line-through; }
 
+.series-episode-next {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+    background: var(--accent-light);
+}
+
+.series-next-badge {
+    flex-shrink: 0;
+    background: var(--accent);
+    color: white;
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 99px;
+}
+
 .series-ep-watched {
     background: none;
     border: none;
@@ -1663,9 +1679,23 @@ img { max-width: 100%; }
     .file-list-header .file-list-size { display: none; }
 
     /* Toolbar */
-    .toolbar { gap: 8px; }
+    .toolbar { gap: 8px; flex-wrap: wrap; }
     .results-count { display: none; }
     .type-filter-btn { padding: 7px 8px; }
+    .btn-play-all { font-size: 0.78rem; padding: 6px 10px; }
+    #favoritesBtn { font-size: 0.78rem; padding: 5px 9px; }
+
+    /* Series detail on mobile */
+    .series-detail-header { flex-direction: column; align-items: stretch; }
+    .series-detail-thumb { width: 100%; }
+    .series-episode { flex-wrap: wrap; gap: 8px; }
+    .series-ep-name { flex-basis: 100%; order: 3; }
+    .series-ep-meta { order: 2; }
+    .series-ep-num { order: 1; }
+    .series-episode .btn-play { order: 4; }
+    .series-next-badge { order: 1; }
+
+    .home-section-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
 
     /* Modal */
     .modal-overlay { padding: 0; }
