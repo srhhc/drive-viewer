@@ -16,6 +16,9 @@ const App = {
     async init() {
         UI.init();
         VideoPlayer.init();
+        this._initLightbox();
+        this._initHistory();
+        this._initDeepLinks();
 
         UI.showState('loading');
 
@@ -27,13 +30,27 @@ const App = {
 
         UI.renderFolderTree(null, null, '');
 
-        const lastFolder = localStorage.getItem(CONFIG.lastFolderKey);
-        if (lastFolder && DataStore.folders.find(f => f.id === lastFolder)) {
-            await this.selectFolder(lastFolder);
-        } else if (DataStore.folders.length > 0) {
-            await this.selectFolder(DataStore.folders[0].id);
+        const hash = location.hash;
+        if (hash && hash !== '#/') {
+            // Deep link — navigate to it
+            await this._handleHash();
+            if (!this._hashHandledFolder) {
+                const lastFolder = localStorage.getItem(CONFIG.lastFolderKey);
+                if (lastFolder && DataStore.folders.find(f => f.id === lastFolder)) {
+                    await this.selectFolder(lastFolder);
+                } else if (DataStore.folders.length > 0) {
+                    await this.selectFolder(DataStore.folders[0].id);
+                }
+            }
         } else {
-            UI.showState('welcome');
+            const lastFolder = localStorage.getItem(CONFIG.lastFolderKey);
+            if (lastFolder && DataStore.folders.find(f => f.id === lastFolder)) {
+                await this.selectFolder(lastFolder);
+            } else if (DataStore.folders.length > 0) {
+                await this.selectFolder(DataStore.folders[0].id);
+            } else {
+                UI.showState('welcome');
+            }
         }
     },
 
@@ -41,8 +58,140 @@ const App = {
         if (DataStore.currentFolderId) {
             this.currentPath = '';
             this._refreshView();
+            this._updateHash();
         } else if (DataStore.folders.length > 0) {
             this.selectFolder(DataStore.folders[0].id);
+        }
+    },
+
+    playFile(file) {
+        // Open in player with the current view as the queue
+        VideoPlayer.open(file, this.currentDisplayFiles);
+    },
+
+    /* --- Image lightbox --- */
+    _initLightbox() {
+        this.lightbox = {
+            modal: document.getElementById('lightboxModal'),
+            img: document.getElementById('lightboxImage'),
+            title: document.getElementById('lightboxTitle'),
+            download: document.getElementById('lightboxDownload')
+        };
+        document.getElementById('lightboxClose').addEventListener('click', () => this.closeLightbox());
+        this.lightbox.modal.addEventListener('click', (e) => {
+            if (e.target === this.lightbox.modal) this.closeLightbox();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.lightbox.modal.style.display !== 'none') this.closeLightbox();
+        });
+    },
+
+    openLightbox(file) {
+        this.lightbox.title.textContent = file.name;
+        this.lightbox.img.src = getImageUrl(file, 1600);
+        this.lightbox.download.href = getDriveDownloadUrl(file.id);
+        this.lightbox.modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    },
+
+    closeLightbox() {
+        this.lightbox.modal.style.display = 'none';
+        this.lightbox.img.src = '';
+        document.body.style.overflow = '';
+    },
+
+    /* --- Watch history --- */
+    _initHistory() {
+        this.historyEls = {
+            section: document.getElementById('historySection'),
+            list: document.getElementById('historyList'),
+            clear: document.getElementById('historyClear')
+        };
+        this.historyEls.clear.addEventListener('click', () => {
+            localStorage.removeItem(CONFIG.historyKey);
+            this.refreshHistory();
+        });
+        this.refreshHistory();
+    },
+
+    refreshHistory() {
+        if (!this.historyEls) return;
+        let history = [];
+        try { history = JSON.parse(localStorage.getItem(CONFIG.historyKey) || '[]'); } catch (e) {}
+
+        if (!history.length) {
+            this.historyEls.section.style.display = 'none';
+            return;
+        }
+        this.historyEls.section.style.display = '';
+        this.historyEls.list.innerHTML = history.map(h => {
+            const icon = h.isAudio ? 'fa-music' : (h.isVideo ? 'fa-film' : 'fa-image');
+            return '<div class="history-item" data-id="' + h.id + '" title="' + this._esc(h.name) + '">'
+                + '<i class="fas ' + icon + '"></i>'
+                + '<span class="history-name">' + this._esc(h.name) + '</span>'
+                + '</div>';
+        }).join('');
+
+        this.historyEls.list.querySelectorAll('.history-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const h = history.find(x => x.id === item.dataset.id);
+                if (!h) return;
+                // Reconstruct a minimal file object and open the player
+                const file = {
+                    id: h.id,
+                    name: h.name,
+                    mimeType: h.mimeType || '',
+                    isVideo: h.isVideo,
+                    isAudio: h.isAudio,
+                    path: h.path || '',
+                    webViewLink: 'https://drive.google.com/file/d/' + h.id + '/view',
+                    sizeFormatted: '',
+                    dateFormatted: '',
+                    icon: ''
+                };
+                if (h.isVideo || h.isAudio) {
+                    VideoPlayer.open(file, []);
+                } else if (h.mimeType.startsWith('image/')) {
+                    this.openLightbox(file);
+                }
+            });
+        });
+    },
+
+    _esc(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = String(str);
+        return div.innerHTML;
+    },
+
+    /* --- Deep links (#/folderId/path...) --- */
+    _initDeepLinks() {
+        window.addEventListener('hashchange', () => this._handleHash());
+    },
+
+    async _handleHash() {
+        const hash = location.hash;
+        if (!hash || hash === '#/') return;
+        const parts = hash.replace(/^#\//, '').split('/').map(decodeURIComponent);
+        const folderId = parts[0];
+        if (!folderId || !DataStore.folders.find(f => f.id === folderId)) return;
+        const path = parts.slice(1).join('/');
+        await this.selectFolder(folderId);
+        this._hashHandledFolder = folderId;
+        if (path) {
+            this.navigateToPath(path);
+        }
+    },
+
+    _updateHash() {
+        if (!DataStore.currentFolderId) return;
+        let hash = '#/' + DataStore.currentFolderId;
+        if (this.currentPath) {
+            hash += '/' + this.currentPath.split('/').map(encodeURIComponent).join('/');
+        }
+        if (location.hash !== hash) {
+            history.replaceState(null, '', hash);
         }
     },
 
@@ -87,6 +236,7 @@ const App = {
 
         UI.renderFolderTree(folderId, this.folderTree, this.currentPath);
         UI.renderBreadcrumb(folderId, this.currentPath);
+        this._updateHash();
 
         let files = DataStore.currentFiles;
         if (this.currentPath) {

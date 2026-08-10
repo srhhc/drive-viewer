@@ -50,6 +50,10 @@ const CONFIG = {
     // File type filter
     filterModeKey: 'drive-viewer-filter-mode',
 
+    // Watch history
+    historyKey: 'drive-viewer-history',
+    historyMax: 15,
+
     // Video extensions to show with video icon
     videoExtensions: [
         'mp4', 'mkv', 'webm', 'avi', 'mov', 'wmv',

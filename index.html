@@ -69,6 +69,15 @@
                     <span>טוען תיקיות...</span>
                 </div>
             </nav>
+            <div class="sidebar-history" id="historySection" style="display:none;">
+                <div class="sidebar-history-header">
+                    <h3><i class="fas fa-history"></i> נצפה לאחרונה</h3>
+                    <button class="btn-icon btn-xs" id="historyClear" aria-label="נקה היסטוריה" title="נקה היסטוריה">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+                <div class="history-list" id="historyList"></div>
+            </div>
             <div class="sidebar-footer">
                 <p class="sidebar-disclaimer">
                     <i class="fas fa-exclamation-triangle"></i>
@@ -171,6 +180,15 @@
             <div class="modal-header">
                 <h3 class="modal-title" id="playerTitle"></h3>
                 <div class="modal-actions">
+                    <div class="player-nav">
+                        <button class="btn-icon" id="playerPrev" aria-label="הקודם" title="הקודם">
+                            <i class="fas fa-step-backward"></i>
+                        </button>
+                        <span class="player-counter" id="playerCounter"></span>
+                        <button class="btn-icon" id="playerNext" aria-label="הבא" title="הבא">
+                            <i class="fas fa-step-forward"></i>
+                        </button>
+                    </div>
                     <a class="btn btn-sm btn-download" id="playerDownload" href="#" target="_blank" rel="noopener">
                         <i class="fas fa-download"></i> הורדה
                     </a>
@@ -183,6 +201,26 @@
                 <div class="player-wrapper" id="playerWrapper">
                     <iframe id="playerFrame" src="" allow="autoplay; fullscreen"></iframe>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== IMAGE LIGHTBOX ===== -->
+    <div class="modal-overlay" id="lightboxModal" style="display:none;">
+        <div class="lightbox-container">
+            <div class="modal-header">
+                <h3 class="modal-title" id="lightboxTitle"></h3>
+                <div class="modal-actions">
+                    <a class="btn btn-sm btn-download" id="lightboxDownload" href="#" target="_blank" rel="noopener">
+                        <i class="fas fa-download"></i> הורדה
+                    </a>
+                    <button class="btn-icon modal-close" id="lightboxClose" aria-label="סגור">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="lightbox-body">
+                <img id="lightboxImage" src="" alt="">
             </div>
         </div>
     </div>

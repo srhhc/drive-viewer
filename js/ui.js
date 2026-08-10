@@ -276,13 +276,14 @@ const UI = {
 
             card.addEventListener('click', (e) => {
                 if (e.target.closest('button') || e.target.closest('a')) return;
-                if (file.isVideo || file.isAudio) VideoPlayer.open(file);
+                if (file.isVideo || file.isAudio) App.playFile(file);
+                else if (file.mimeType.startsWith('image/')) App.openLightbox(file);
                 else window.open(file.webViewLink || getDrivePreviewUrl(file.id), '_blank');
             });
 
             const playBtn = card.querySelector('.btn-play');
             if (playBtn) {
-                playBtn.addEventListener('click', (e) => { e.stopPropagation(); VideoPlayer.open(file); });
+                playBtn.addEventListener('click', (e) => { e.stopPropagation(); App.playFile(file); });
             }
 
             const copyBtn = card.querySelector('.btn-copy');
@@ -337,7 +338,7 @@ const UI = {
     _fileCardHtml(file) {
         const es = (s) => this._escapeHtml(s);
         const thumbContent = file.thumbnailLink
-            ? '<img src="' + es(file.thumbnailLink) + '" alt="" loading="lazy"><span class="thumb-icon" style="display:none">' + file.icon + '</span>'
+            ? '<img src="' + es(getImageUrl(file, 640)) + '" alt="" loading="lazy"><span class="thumb-icon" style="display:none">' + file.icon + '</span>'
             : '<span class="thumb-icon">' + file.icon + '</span>';
 
         const badges = [];
@@ -386,13 +387,14 @@ const UI = {
 
             row.addEventListener('click', (e) => {
                 if (e.target.closest('button') || e.target.closest('a')) return;
-                if (file.isVideo || file.isAudio) VideoPlayer.open(file);
+                if (file.isVideo || file.isAudio) App.playFile(file);
+                else if (file.mimeType.startsWith('image/')) App.openLightbox(file);
                 else window.open(file.webViewLink || getDrivePreviewUrl(file.id), '_blank');
             });
 
             const playBtn = row.querySelector('.btn-play');
             if (playBtn) {
-                playBtn.addEventListener('click', (e) => { e.stopPropagation(); VideoPlayer.open(file); });
+                playBtn.addEventListener('click', (e) => { e.stopPropagation(); App.playFile(file); });
             }
 
             const copyBtn = row.querySelector('.btn-copy');
@@ -545,7 +547,7 @@ const UI = {
     sortFiles(files) {
         const sorted = [...files];
         switch (this.sortMode) {
-            case 'name': sorted.sort((a, b) => a.name.localeCompare(b.name, 'he')); break;
+            case 'name': sorted.sort((a, b) => a.name.localeCompare(b.name, 'he', { numeric: true, sensitivity: 'base' })); break;
             case 'date': sorted.sort((a, b) => new Date(b.modifiedTime) - new Date(a.modifiedTime)); break;
             case 'size': sorted.sort((a, b) => b.size - a.size); break;
         }

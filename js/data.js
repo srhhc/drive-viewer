@@ -276,3 +276,14 @@ function getDrivePreviewUrl(fileId) {
 function getDriveDownloadUrl(fileId) {
     return CONFIG.driveDownloadUrl.replace('{id}', fileId);
 }
+
+/**
+ * Get a direct image URL from a Drive thumbnail at the requested size.
+ * Drive thumbnails use the =sNNN suffix to control resolution.
+ */
+function getImageUrl(file, size) {
+    if (file.thumbnailLink) {
+        return file.thumbnailLink.replace(/=s\d+/, '=s' + (size || 640));
+    }
+    return file.webViewLink || getDrivePreviewUrl(file.id);
+}
