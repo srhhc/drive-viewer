@@ -33,6 +33,9 @@ const UI = {
             breadcrumbPath: document.getElementById('breadcrumbPath'),
             recentBtn: document.getElementById('recentBtn'),
             favoritesBtn: document.getElementById('favoritesBtn'),
+            categoriesBtn: document.getElementById('categoriesBtn'),
+            categoriesView: document.getElementById('categoriesView'),
+            toolbar: document.getElementById('toolbar'),
 
             resultsCount: document.getElementById('resultsCount'),
             sortSelect: document.getElementById('sortSelect'),
@@ -110,6 +113,7 @@ const UI = {
         this.els.playAllBtn.addEventListener('click', () => App.playAll());
         this.els.favoritesBtn.addEventListener('click', () => App.showFavorites());
 
+        this.els.categoriesBtn.addEventListener('click', () => App.showCategories());
         this.els.themeToggle.addEventListener('click', () => this.toggleTheme());
         this.els.disclaimerClose.addEventListener('click', () => this.dismissDisclaimer());
         this.els.breadcrumbHome.addEventListener('click', () => App.goHome());
@@ -316,32 +320,36 @@ const UI = {
 
         this.els.resultsCount.textContent = seriesList.length.toLocaleString() + ' סדרות · ' + seriesList.reduce((a, s) => a + s.totalEpisodes, 0).toLocaleString() + ' פרקים';
 
-        grid.innerHTML = seriesList.map(series => {
-            const watched = series.files.filter(f => SeriesEngine.isWatched(f.id)).length;
-            const thumb = series.thumbnail
-                ? '<img src="' + getImageUrl({ thumbnailLink: series.thumbnail }, 320) + '" alt="" loading="lazy">'
-                : '<i class="fas fa-tv"></i>';
-            return '<div class="series-card" data-series="' + this._escapeHtml(series.name) + '">'
-                + '<div class="series-card-thumb">' + thumb + '</div>'
-                + '<div class="series-card-body">'
-                + '<div class="series-card-name" title="' + this._escapeHtml(series.name) + '">' + this._escapeHtml(series.name) + '</div>'
-                + '<div class="series-card-meta">'
-                + '<span><i class="fas fa-layer-group"></i> ' + series.seasonCount + ' עונות</span>'
-                + '<span><i class="fas fa-clapperboard"></i> ' + series.totalEpisodes + ' פרקים</span>'
-                + (watched ? '<span class="series-watched-count"><i class="fas fa-check-circle"></i> ' + watched + ' נצפו</span>' : '')
-                + '</div>'
-                + '<div class="series-card-progress">'
-                + '<div class="progress-bar"><div class="progress-fill" style="width:' + Math.round(watched / series.totalEpisodes * 100) + '%"></div></div>'
-                + '<span>' + Math.round(watched / series.totalEpisodes * 100) + '%</span>'
-                + '</div>'
-                + '</div></div>';
-        }).join('');
+        grid.innerHTML = seriesList.map(s => this.seriesCardHtml(s)).join('');
 
         grid.style.display = 'grid';
 
         grid.querySelectorAll('.series-card').forEach(card => {
             card.addEventListener('click', () => App.openSeries(card.dataset.series, seriesList));
         });
+    },
+
+    /* Series card markup (shared with the categories view) */
+    seriesCardHtml(series) {
+        const watched = series.files.filter(f => SeriesEngine.isWatched(f.id)).length;
+        const thumb = series.thumbnail
+            ? '<img src="' + getImageUrl({ thumbnailLink: series.thumbnail }, 320) + '" alt="" loading="lazy">'
+            : '<i class="fas fa-tv"></i>';
+        const pct = Math.round(watched / series.totalEpisodes * 100);
+        return '<div class="series-card" data-series="' + this._escapeHtml(series.name) + '">'
+            + '<div class="series-card-thumb">' + thumb + '</div>'
+            + '<div class="series-card-body">'
+            + '<div class="series-card-name" title="' + this._escapeHtml(series.name) + '">' + this._escapeHtml(series.name) + '</div>'
+            + '<div class="series-card-meta">'
+            + '<span><i class="fas fa-layer-group"></i> ' + series.seasonCount + ' עונות</span>'
+            + '<span><i class="fas fa-clapperboard"></i> ' + series.totalEpisodes + ' פרקים</span>'
+            + (watched ? '<span class="series-watched-count"><i class="fas fa-check-circle"></i> ' + watched + ' נצפו</span>' : '')
+            + '</div>'
+            + '<div class="series-card-progress">'
+            + '<div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%"></div></div>'
+            + '<span>' + pct + '%</span>'
+            + '</div>'
+            + '</div></div>';
     },
 
 
@@ -544,12 +552,18 @@ const UI = {
 
     /* --- State Visibility --- */
     showState(state) {
-        ['welcomeState','loadingState','emptyState','errorState','fileGrid','fileList','seriesGrid'].forEach(id => {
+        ['welcomeState','loadingState','emptyState','errorState','fileGrid','fileList','seriesGrid','categoriesView'].forEach(id => {
             this.els[id].style.display = 'none';
         });
         if (state === 'content') return;
-        const el = this.els[state + 'State'];
+        const map = { welcome: 'welcomeState', loading: 'loadingState', empty: 'emptyState', error: 'errorState', categories: 'categoriesView' };
+        const el = map[state] ? this.els[map[state]] : null;
         if (el) el.style.display = '';
+        // The file toolbar (type filters / view toggle / sort) only applies to
+        // the file grid — hide it in category & welcome modes.
+        if (this.els.toolbar) {
+            this.els.toolbar.style.display = (state === 'categories' || state === 'welcome') ? 'none' : '';
+        }
     },
 
     showError(message) {
@@ -559,6 +573,8 @@ const UI = {
 
     /* --- View Mode --- */
     setViewMode(mode) {
+        // Leaving the categories view goes back to the folder/home content
+        if (App.categoriesMode) App.hideCategories();
         this.viewMode = mode;
         localStorage.setItem(CONFIG.viewModeKey, mode);
         this.els.viewBtns.forEach(b => b.classList.toggle('active', b.dataset.view === mode));

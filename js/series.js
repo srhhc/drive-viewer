@@ -9,8 +9,8 @@
 const SeriesEngine = {
     /* --- Episode detection patterns (ordered by specificity) --- */
     _patterns: [
-        // עונה X פרק Y (Hebrew, most specific)
-        { re: /עונה\s*(\d+)\s*פרק\s*(\d+)/i, season: 1, episode: 2 },
+        // עונה X, פרק Y (Hebrew, most specific — optional comma, common in Hebrew naming)
+        { re: /עונה\s*(\d+)\s*[,.]?\s*פרק\s*(\d+)/i, season: 1, episode: 2 },
         // S01E02 style
         { re: /[sS]\s*(\d+)\s*[eE]\s*(\d+)/, season: 1, episode: 2 },
         // 1x02 style
@@ -24,6 +24,9 @@ const SeriesEngine = {
     /* Noise words stripped from series names */
     _noise: /הועלה\s*ע[^ ]*\s*[^\s]+|הועלה\s*ע[^ ]*|לצפייה\s*ישירה|אחרון\s*לעונה|עונה\s*\d+|פרק\s*[\d\-]+|\([^)]*\)|\[[^\]]*\]|\d{3,4}[pPiI]|\d+\.\d+[pP]/g,
 
+    /* Common shared-drive prefixes that repeat in names and don't affect identity */
+    _copyPrefix: /^(?:copy\s+of|עותק\s+של|העותק|עותק)\s+/i,
+
     /* Separator / invisible-character cleanup (applied after noise strip) */
     _cleanName(raw) {
         return raw
@@ -32,7 +35,20 @@ const SeriesEngine = {
             .replace(/\s*[-–—]\s*/g, ' ')
             .replace(/[\s_.]+/g, ' ')
             .replace(/\s+/g, ' ')
+            // Strip leading/trailing separators left over from episode-info removal
+            .replace(/^[\s•·*:,.]+/, '')
+            .replace(/[\s•·*:,.]+$/, '')
             .trim();
+    },
+
+    /** Strip repeated copy prefixes ("Copy of Copy of עותק של ...") */
+    _stripCopy(raw) {
+        let prev;
+        do {
+            prev = raw;
+            raw = raw.replace(this._copyPrefix, '');
+        } while (raw !== prev);
+        return raw;
     },
 
     /**
@@ -47,10 +63,18 @@ const SeriesEngine = {
         for (const p of this._patterns) {
             const m = name.match(p.re);
             if (m) {
-                let seriesName = name.replace(p.re, '');
+                // Series name = everything BEFORE the episode marker. Text after the
+                // episode number is usually an episode description ("פרק 5 עלה עי מיכל 💕")
+                // that must not leak into the series identity.
+                let seriesName = this._stripCopy(name.slice(0, m.index));
                 // Clean the series name: strip noise, then normalize separators
                 seriesName = this._cleanName(seriesName.replace(this._noise, ' '));
-                if (!seriesName) return null;
+                if (!seriesName) {
+                    // Fallback: episode-first naming ("פרק 3 - שם הסדרה")
+                    seriesName = this._stripCopy(name.slice(m.index + m[0].length));
+                    seriesName = this._cleanName(seriesName.replace(this._noise, ' '));
+                    if (!seriesName) return null;
+                }
 
                 const season = p.season ? parseInt(m[p.season], 10) : 1;
                 const episode = parseInt(m[p.episode], 10);

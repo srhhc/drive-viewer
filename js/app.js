@@ -327,8 +327,274 @@ const App = {
         }
     },
 
+    /* --- Categories & A-Z browsing --- */
+    categoriesMode: false,
+    _catData: null,
+    _catState: null,
+
+    async _loadCategories() {
+        if (this._catData) return this._catData;
+        const searchFiles = await DataStore.loadSearchIndex();
+        const allSeries = SeriesEngine.groupFiles(searchFiles);
+        const grouped = CategoryEngine.groupAll(allSeries, searchFiles);
+        const moviesEntry = grouped.find(g => g.def.id === 'movies');
+        const movies = moviesEntry ? moviesEntry.movies : [];
+        this._catData = {
+            allSeries,
+            grouped,
+            movies,
+            fileById: new Map(movies.map(m => [m.id, m]))
+        };
+        return this._catData;
+    },
+
+    hideCategories() {
+        this.categoriesMode = false;
+        this._catState = null;
+        if (DataStore.currentFolderId) {
+            this.selectFolder(DataStore.currentFolderId);
+        } else {
+            this.showHome();
+        }
+    },
+
+    async showCategories(catId, opts) {
+        UI.showState('loading');
+        try {
+            const data = await this._loadCategories();
+            this.categoriesMode = true;
+            this.homeMode = false;
+            this.favoritesMode = false;
+            this.recentMode = false;
+            this.isSearchMode = false;
+            this.searchQuery = '';
+            UI.matchHighlights = {};
+            UI.renderFolderTree(null, null, '');
+            UI.renderBreadcrumb(null, '');
+            document.getElementById('breadcrumb').insertAdjacentHTML('beforeend',
+                '<span class="breadcrumb-separator breadcrumb-mode">/</span><span class="breadcrumb-recent breadcrumb-mode"><i class="fas fa-layer-group"></i> קטגוריות</span>');
+
+            this._catState = {
+                tab: (opts && opts.tab === 'az') ? 'az' : 'grid',
+                catId: catId || null,
+                letter: (opts && opts.letter) || null,
+                azType: (opts && opts.azType) || 'series',
+                movieShown: {},
+                azMovieShown: {}
+            };
+            UI.showState('categories');
+            this._renderCategories();
+        } catch (err) {
+            UI.showError('שגיאה בטעינת קטגוריות: ' + err.message);
+        }
+    },
+
+    _renderCategories() {
+        const view = UI.els.categoriesView;
+        const st = this._catState;
+        const data = this._catData;
+        if (!view || !st || !data) return;
+
+        const tabsHtml = '<div class="cat-tabs">'
+            + '<button class="cat-tab' + (st.tab === 'grid' ? ' active' : '') + '" data-cat-tab="grid"><i class="fas fa-tags"></i> קטגוריות</button>'
+            + '<button class="cat-tab' + (st.tab === 'az' ? ' active' : '') + '" data-cat-tab="az"><i class="fas fa-sort-alpha-down"></i> א-ת</button>'
+            + '</div>';
+
+        const body = st.tab === 'az' ? this._azBody(data) : (st.catId ? this._catDetailBody(data) : this._catGridBody(data));
+        view.innerHTML = tabsHtml + body;
+        view.style.display = 'block';
+
+        // Tabs
+        view.querySelectorAll('.cat-tab').forEach(btn => {
+            btn.addEventListener('click', () => {
+                st.tab = btn.dataset.catTab;
+                st.catId = null;
+                st.letter = null;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                this._renderCategories();
+            });
+        });
+        // Category cards → detail
+        view.querySelectorAll('.category-card').forEach(card => {
+            card.addEventListener('click', () => {
+                st.catId = card.dataset.cat;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                this._renderCategories();
+            });
+        });
+        // Back to category grid
+        const backBtn = view.querySelector('.cat-back');
+        if (backBtn) backBtn.addEventListener('click', () => {
+            st.catId = null;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            this._renderCategories();
+        });
+        // A-Z letter chips
+        view.querySelectorAll('.az-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                st.letter = chip.dataset.letter;
+                this._renderCategories();
+                const el = document.getElementById('az-' + st.letter);
+                if (el) el.scrollIntoView({ block: 'start' });
+            });
+        });
+        // A-Z type toggle (series / movies)
+        view.querySelectorAll('.az-type-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                st.azType = btn.dataset.type;
+                st.letter = null;
+                this._renderCategories();
+            });
+        });
+        // Load-more buttons for movies
+        view.querySelectorAll('.cat-load-more').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (btn.dataset.cat) st.movieShown[btn.dataset.cat] = (st.movieShown[btn.dataset.cat] || 24) + 24;
+                if (btn.dataset.letter) st.azMovieShown[btn.dataset.letter] = (st.azMovieShown[btn.dataset.letter] || 24) + 24;
+                this._renderCategories();
+            });
+        });
+
+        this._bindCatSeriesCards(view);
+        this._bindCatMovieCards(view);
+    },
+
+    _catGridBody(data) {
+        const cards = data.grouped.map(g => {
+            const thumb = (g.series[0] && g.series[0].thumbnail) || (g.movies[0] && g.movies[0].thumbnailLink) || '';
+            const label = g.seriesCount > 0 && g.movieCount > 0
+                ? g.seriesCount + ' סדרות · ' + g.movieCount + ' סרטים'
+                : g.seriesCount > 0 ? g.seriesCount + ' סדרות' : g.movieCount + ' סרטים';
+            return '<div class="category-card" data-cat="' + g.def.id + '">'
+                + '<div class="category-card-thumb">'
+                + (thumb ? '<img src="' + this._esc(getImageUrl({ thumbnailLink: thumb }, 320)) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">' : '')
+                + '<i class="fas ' + g.def.icon + '"></i>'
+                + '</div>'
+                + '<div class="category-card-body">'
+                + '<div class="category-card-name">' + this._esc(g.def.name) + '</div>'
+                + '<div class="category-card-count">' + label + '</div>'
+                + '</div></div>';
+        }).join('');
+        return '<div class="category-grid">' + cards + '</div>';
+    },
+
+    _catDetailBody(data) {
+        const entry = data.grouped.find(g => g.def.id === this._catState.catId);
+        if (!entry) return this._catGridBody(data);
+        const st = this._catState;
+        let html = '<button class="btn btn-sm cat-back"><i class="fas fa-arrow-right"></i> כל הקטגוריות</button>';
+        html += '<h3 class="cat-detail-title"><i class="fas ' + entry.def.icon + '"></i> ' + this._esc(entry.def.name) + '</h3>';
+        if (entry.series.length) {
+            html += '<h4 class="cat-section-title"><i class="fas fa-tv"></i> סדרות (' + entry.series.length + ')</h4>';
+            html += '<div class="series-grid cat-series-grid">' + entry.series.map(s => UI.seriesCardHtml(s)).join('') + '</div>';
+        }
+        if (entry.movies.length) {
+            const shown = st.movieShown[entry.def.id] || 24;
+            const slice = entry.movies.slice(0, shown);
+            html += '<h4 class="cat-section-title"><i class="fas fa-film"></i> סרטים (' + entry.movies.length + ')</h4>';
+            html += '<div class="file-grid cat-movie-grid">' + slice.map(f => UI._fileCardHtml(f)).join('') + '</div>';
+            if (shown < entry.movies.length) {
+                html += '<button class="btn btn-primary cat-load-more" data-cat="' + entry.def.id + '"><i class="fas fa-plus"></i> טען עוד סרטים (' + Math.min(24, entry.movies.length - shown) + ')</button>';
+            }
+        }
+        return html;
+    },
+
+    _azBody(data) {
+        const st = this._catState;
+        const isMovies = st.azType === 'movies';
+        const toggle = '<div class="az-type-toggle">'
+            + '<button class="az-type-btn' + (!isMovies ? ' active' : '') + '" data-type="series"><i class="fas fa-tv"></i> סדרות</button>'
+            + '<button class="az-type-btn' + (isMovies ? ' active' : '') + '" data-type="movies"><i class="fas fa-film"></i> סרטים</button>'
+            + '</div>';
+
+        const groupedMap = isMovies
+            ? CategoryEngine.groupByLetter(data.movies, f => f.name)
+            : CategoryEngine.groupByLetter(data.allSeries, s => s.name);
+        const letters = CategoryEngine.availableLetters(groupedMap);
+
+        const chips = '<div class="az-bar">' + letters.map(l => {
+            const cnt = groupedMap.get(l).length;
+            return '<button class="az-chip' + (st.letter === l ? ' active' : '') + '" data-letter="' + this._esc(l) + '" title="' + cnt + ' פריטים">' + this._esc(l) + '<small>' + cnt + '</small></button>';
+        }).join('') + '</div>';
+
+        let body = '';
+        if (st.letter && groupedMap.has(st.letter)) {
+            const list = groupedMap.get(st.letter);
+            if (isMovies) {
+                const shown = st.azMovieShown[st.letter] || 24;
+                body += '<h4 class="cat-section-title">' + this._esc(st.letter) + ' — סרטים (' + list.length + ')</h4>';
+                body += '<div class="file-grid cat-movie-grid">' + list.slice(0, shown).map(f => UI._fileCardHtml(f)).join('') + '</div>';
+                if (shown < list.length) {
+                    body += '<button class="btn btn-primary cat-load-more" data-letter="' + this._esc(st.letter) + '"><i class="fas fa-plus"></i> טען עוד סרטים (' + Math.min(24, list.length - shown) + ')</button>';
+                }
+            } else {
+                body += '<h4 class="cat-section-title">' + this._esc(st.letter) + ' — סדרות (' + list.length + ')</h4>';
+                body += '<div class="series-grid cat-series-grid">' + list.map(s => UI.seriesCardHtml(s)).join('') + '</div>';
+            }
+        } else {
+            body = letters.map(l => {
+                const list = groupedMap.get(l);
+                let sec = '<h4 class="cat-section-title az-section-title" id="az-' + this._esc(l) + '">' + this._esc(l) + ' <small>(' + list.length + ')</small></h4>';
+                if (isMovies) {
+                    const shown = st.azMovieShown[l] || 24;
+                    sec += '<div class="file-grid cat-movie-grid">' + list.slice(0, shown).map(f => UI._fileCardHtml(f)).join('') + '</div>';
+                    if (shown < list.length) {
+                        sec += '<button class="btn btn-primary cat-load-more" data-letter="' + this._esc(l) + '"><i class="fas fa-plus"></i> טען עוד (' + Math.min(24, list.length - shown) + ')</button>';
+                    }
+                } else {
+                    sec += '<div class="series-grid cat-series-grid">' + list.map(s => UI.seriesCardHtml(s)).join('') + '</div>';
+                }
+                return sec;
+            }).join('');
+        }
+        return toggle + chips + '<div class="az-body">' + body + '</div>';
+    },
+
+    _bindCatSeriesCards(view) {
+        const data = this._catData;
+        view.querySelectorAll('.cat-series-grid .series-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const name = card.dataset.series;
+                const series = data.allSeries.find(s => s.name === name);
+                if (series) this.openSeries(series.name, data.allSeries);
+            });
+        });
+    },
+
+    _bindCatMovieCards(view) {
+        const byId = this._catData.fileById;
+        view.querySelectorAll('.cat-movie-grid .file-card').forEach(card => {
+            const file = byId.get(card.dataset.fileId);
+            if (!file) return;
+            const img = card.querySelector('.file-card-thumb img');
+            if (img) img.addEventListener('error', () => {
+                img.style.display = 'none';
+                const fallback = card.querySelector('.file-card-thumb .thumb-icon');
+                if (fallback) fallback.style.display = '';
+            });
+            card.addEventListener('click', (e) => {
+                if (e.target.closest('button') || e.target.closest('a')) return;
+                if (file.isVideo || file.isAudio) this.playFile(file);
+                else if (file.mimeType.startsWith('image/')) this.openLightbox(file);
+                else window.open(file.webViewLink || getDrivePreviewUrl(file.id), '_blank');
+            });
+            const playBtn = card.querySelector('.btn-play');
+            if (playBtn) playBtn.addEventListener('click', (e) => { e.stopPropagation(); this.playFile(file); });
+            const copyBtn = card.querySelector('.btn-copy');
+            if (copyBtn) copyBtn.addEventListener('click', (e) => { e.stopPropagation(); UI._copyToClipboard(file, copyBtn); });
+            const favBtn = card.querySelector('.btn-fav');
+            if (favBtn) favBtn.addEventListener('click', (e) => { e.stopPropagation(); this.toggleFavorite(file, favBtn); });
+        });
+    },
+
     playFile(file) {
-        // Open in player with the current view as the queue
+        // In the categories view the play queue is the standalone-movie list
+        if (this.categoriesMode && this._catData) {
+            const playable = this._catData.movies.filter(f => f.isVideo || f.isAudio);
+            VideoPlayer.open(file, playable);
+            return;
+        }
         VideoPlayer.open(file, this.currentDisplayFiles);
     },
 

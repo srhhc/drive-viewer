@@ -360,6 +360,51 @@ t('parse handles edge-case names without throwing', () => {
     }
 });
 
+console.log('\n=== 6b. CATEGORY ENGINE ===');
+// Load categories.js the same way (stubbed localStorage already in place)
+const catSrc = read(path.join(JS, 'categories.js'));
+(0, eval)(catSrc + '\n;globalThis.__CE = CategoryEngine;');
+const CategoryEngine = globalThis.__CE;
+delete globalThis.__CE;
+
+t('category defs are all Font Awesome icons (no emojis)', () => {
+    for (const d of CategoryEngine.defs) {
+        if (!/^fa-[a-z0-9-]+$/.test(d.icon)) throw new Error('bad icon for ' + d.id + ': ' + d.icon);
+    }
+});
+t('classify matches Hebrew + English keywords', () => {
+    if (!CategoryEngine.classify('דרגון בול זי').includes('anime')) throw new Error('anime keyword missed');
+    if (!CategoryEngine.classify('star wars movie').includes('scifi')) throw new Error('scifi keyword missed');
+    if (!CategoryEngine.classify('מהדורת החדשות').includes('documentary')) throw new Error('news keyword missed');
+    if (CategoryEngine.classify('סרט').includes('movies')) throw new Error('generic movies category should never auto-match');
+});
+t('groupAll: every standalone movie is in movies + series are assigned', () => {
+    // Runtime marks isVideo via mimeType — replicate it here for the raw JSON files
+    const isVideo = f => (f.mimeType || '').indexOf('video/') === 0;
+    const files = allFiles.map(a => Object.assign({ isVideo: isVideo(a.file) }, a.file));
+    const seriesList = SeriesEngine.groupFiles(files);
+    const grouped = CategoryEngine.groupAll(seriesList, files);
+    const moviesEntry = grouped.find(g => g.def.id === 'movies');
+    if (!moviesEntry || moviesEntry.movies.length === 0) throw new Error('no movies bucket');
+    // movies bucket must equal standalone videos (video files not inside a series)
+    const inSeries = new Set();
+    for (const s of seriesList) for (const f of s.files) inSeries.add(f.id);
+    const standalone = files.filter(f => f.isVideo && !inSeries.has(f.id)).length;
+    if (moviesEntry.movies.length !== standalone) {
+        throw new Error('movies bucket ' + moviesEntry.movies.length + ' != standalone ' + standalone);
+    }
+    if (!grouped.some(g => g.series.length > 0)) throw new Error('no series assigned to any category');
+});
+t('A-Z grouping: firstLetter + groupByLetter + availableLetters', () => {
+    if (CategoryEngine.firstLetter('אבגד') !== 'א') throw new Error('hebrew first letter');
+    if (CategoryEngine.firstLetter('Zebra') !== 'Z') throw new Error('latin first letter');
+    if (CategoryEngine.firstLetter('123 abc') !== '#') throw new Error('digit -> #');
+    const map = CategoryEngine.groupByLetter([{ n: 'אבגד' }, { n: 'בגד' }, { n: 'Cat' }], x => x.n);
+    if (!map.has('א') || !map.has('ב') || !map.has('C')) throw new Error('grouping letters missing');
+    const letters = CategoryEngine.availableLetters(map);
+    if (letters[0] !== 'א' || letters.indexOf('#') !== -1) throw new Error('letter ordering wrong');
+});
+
 console.log('\n=== 7. SEARCH INDEX SHAPE (Fuse compatibility) ===');
 t('fuseOptions keys match search_index fields', () => {
     const fuseKeys = config.fuseOptions.keys.map(k => (typeof k === 'string' ? k : k.name));
