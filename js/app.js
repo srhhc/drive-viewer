@@ -199,6 +199,16 @@ const App = {
                     series: topSeries
                 });
             }
+
+            // Recommended for you — based on watch history
+            const recs = this._recommendSeries(allSeries, history);
+            if (recs.length > 0) {
+                sections.unshift({
+                    title: '<i class="fas fa-wand-magic-sparkles"></i> מומלצים עבורך',
+                    type: 'series',
+                    series: recs
+                });
+            }
         } catch (e) { /* skip */ }
 
         // Trending / recent across all folders
@@ -320,6 +330,53 @@ const App = {
     playFile(file) {
         // Open in player with the current view as the queue
         VideoPlayer.open(file, this.currentDisplayFiles);
+    },
+
+    /* --- Recommend series based on watch history ---
+       Scores series by: same folder as watched files (+3),
+       shared words with watched series names (+2),
+       recent updates (+1). */
+    _recommendSeries(allSeries, history) {
+        if (!history || history.length === 0) return [];
+
+        // Watched series names + preferred folders
+        const watchedSeries = new Set();
+        const watchedFolders = new Set();
+        for (const h of history) {
+            const parsed = SeriesEngine.parse({ name: h.name });
+            if (parsed) watchedSeries.add(parsed.seriesName);
+            if (h.folderName) watchedFolders.add(h.folderName);
+        }
+        if (watchedSeries.size === 0 && watchedFolders.size === 0) return [];
+
+        // Build word tokens from watched series for fuzzy similarity
+        const watchedTokens = new Set();
+        watchedSeries.forEach(name => {
+            name.split(/\s+/).filter(w => w.length >= 3).forEach(w => watchedTokens.add(w));
+        });
+
+        const scored = [];
+        for (const s of allSeries) {
+            if (watchedSeries.has(s.name)) continue; // already watching
+            if (s.totalEpisodes < 2) continue;
+            let score = 0;
+
+            // Same folder as something watched
+            const sFolders = new Set(s.files.map(f => f.folderName).filter(Boolean));
+            for (const f of watchedFolders) if (sFolders.has(f)) score += 3;
+
+            // Shared tokens with watched series names
+            const tokens = s.name.split(/\s+/).filter(w => w.length >= 3);
+            for (const t of tokens) if (watchedTokens.has(t)) score += 2;
+
+            // Freshness bonus
+            if (Date.now() - s.lastUpdated < 7 * 24 * 3600 * 1000) score += 1;
+
+            if (score > 0) scored.push({ series: s, score });
+        }
+
+        scored.sort((a, b) => b.score - a.score);
+        return scored.slice(0, 8).map(x => x.series);
     },
 
     /* --- Count series across all folders (lazy, once per session) --- */
