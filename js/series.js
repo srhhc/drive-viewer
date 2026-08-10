@@ -75,9 +75,14 @@ const SeriesEngine = {
 
             let series = seriesMap.get(parsed.seriesName);
             if (!series) {
-                series = { name: parsed.seriesName, seasons: new Map(), files: [], lastUpdated: 0, thumbnail: '' };
+                series = { name: parsed.seriesName, seasons: new Map(), files: [], _ids: new Set(), lastUpdated: 0, thumbnail: '' };
                 seriesMap.set(parsed.seriesName, series);
             }
+
+            // Skip exact duplicate files — the same Drive file is often shared
+            // in several folders, and must appear only once per series.
+            if (series._ids.has(file.id)) continue;
+            series._ids.add(file.id);
 
             series.files.push(file);
 
@@ -110,6 +115,7 @@ const SeriesEngine = {
                 lastUpdated: series.lastUpdated,
                 thumbnail: series.thumbnail
             });
+            delete series._ids;
         }
 
         // Sort series: newest first
