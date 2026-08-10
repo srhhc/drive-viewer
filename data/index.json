@@ -3,7 +3,7 @@
     {
       "id": "1uL6Uxkyva9ixQAIwR9xOHj3Oo5NfamM9",
       "name": "VIP🏅",
-      "fileCount": 165
+      "fileCount": 170
     },
     {
       "id": "1S7s5XJwk2BlrjyPG_AWNOCmm_P-SzcYz",
@@ -49,9 +49,14 @@
       "id": "1y3fbtGKxknJf3Jz-hsyH3LNcppbY5z4g",
       "name": "קבצים העולים לדרייב אין להעביר בלי עותק ✨",
       "fileCount": 2258
+    },
+    {
+      "id": "1f3_cLmT7aS5zihvlxJpbCodgwFK43jEn",
+      "name": "תיקיית העתקות מהתוסף",
+      "fileCount": 1157
     }
   ],
-  "lastUpdated": "2026-08-10T17:27:38.498Z",
-  "totalFiles": 14956,
+  "lastUpdated": "2026-08-10T23:11:13.442Z",
+  "totalFiles": 16118,
   "generatedBy": "generate-manifest.js"
 }
