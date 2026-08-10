@@ -68,6 +68,7 @@ const DataStore = {
                 size: size,
                 mimeType: f.mimeType || '',
                 modifiedTime: modifiedTime,
+                createdTime: f.createdTime || '',
                 thumbnailLink: f.thumbnailLink || '',
                 webViewLink: f.webViewLink || '',
                 webContentLink: f.webContentLink || '',
@@ -82,7 +83,7 @@ const DataStore = {
                 sizeFormatted: formatFileSize(size),
                 dateFormatted: formatDate(modifiedTime),
                 icon: getFileIcon(f.name, f.mimeType),
-                isNew: isRecentlyAdded(modifiedTime),
+                isNew: isRecentlyAdded(f.createdTime || modifiedTime),
                 durationFormatted: formatDuration(parseInt(f.durationMs, 10) || 0),
                 qualityLabel: getQualityLabel(f.width, f.height)
             };

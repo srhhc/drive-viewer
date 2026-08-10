@@ -29,7 +29,7 @@ const EXCLUDE_MIME_TYPES = [
 ];
 
 const FILE_FIELDS = [
-    'id', 'name', 'mimeType', 'size', 'modifiedTime',
+    'id', 'name', 'mimeType', 'size', 'modifiedTime', 'createdTime',
     'thumbnailLink', 'webViewLink', 'webContentLink', 'videoMediaMetadata'
 ].join(',');
 
