@@ -292,7 +292,7 @@ const App = {
         UI.renderFolderTree(null, null, '');
         UI.renderBreadcrumb(null, '');
         document.getElementById('breadcrumb').insertAdjacentHTML('beforeend',
-            '<span class="breadcrumb-separator">/</span><span class="breadcrumb-recent"><i class="fas fa-heart"></i> המועדפים</span>');
+            '<span class="breadcrumb-separator breadcrumb-mode">/</span><span class="breadcrumb-recent breadcrumb-mode"><i class="fas fa-heart"></i> המועדפים</span>');
         UI.matchHighlights = {};
         this.lastSearchFiles = favs;
         this.displayFiles(favs, true);
@@ -307,8 +307,8 @@ const App = {
             this.searchQuery = '';
             UI.renderFolderTree(null, null, '');
             UI.renderBreadcrumb(null, '');
-            document.getElementById('breadcrumb').insertAdjacentHTML('beforeend',
-                '<span class="breadcrumb-separator">/</span><span class="breadcrumb-recent"><i class="fas fa-bolt"></i> מה חדש באתר</span>');
+        document.getElementById('breadcrumb').insertAdjacentHTML('beforeend',
+            '<span class="breadcrumb-separator breadcrumb-mode">/</span><span class="breadcrumb-recent breadcrumb-mode"><i class="fas fa-bolt"></i> מה חדש באתר</span>');
             UI.matchHighlights = {};
             this.lastSearchFiles = files;
             this.displayFiles(files, false);
@@ -371,11 +371,17 @@ const App = {
         }
     },
 
-    /* --- Last visit tracking (for 'new since last visit') --- */
+    /* --- Last visit tracking (for 'new since last visit') ---
+       Records the visit only once per page load so re-rendering
+       the home dashboard doesn't reset the baseline. */
+    _visitRecorded: false,
     _recordVisit() {
         const now = Date.now();
         const last = parseInt(localStorage.getItem(CONFIG.lastVisitKey) || '0', 10);
-        localStorage.setItem(CONFIG.lastVisitKey, String(now));
+        if (!this._visitRecorded) {
+            localStorage.setItem(CONFIG.lastVisitKey, String(now));
+            this._visitRecorded = true;
+        }
         return last;
     },
 
@@ -394,7 +400,7 @@ const App = {
         UI.renderFolderTree(null, null, '');
         UI.renderBreadcrumb(null, '');
         document.getElementById('breadcrumb').insertAdjacentHTML('beforeend',
-            '<span class="breadcrumb-separator">/</span><span class="breadcrumb-recent"><i class="fas fa-tv"></i> ' + this._esc(series.name) + '</span>');
+            '<span class="breadcrumb-separator breadcrumb-mode">/</span><span class="breadcrumb-recent breadcrumb-mode"><i class="fas fa-tv"></i> ' + this._esc(series.name) + '</span>');
         UI.matchHighlights = {};
 
         // Render series detail in the main area

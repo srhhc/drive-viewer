@@ -26,6 +26,7 @@ const UI = {
             searchInput: document.getElementById('searchInput'),
             searchClear: document.getElementById('searchClear'),
 
+            breadcrumb: document.getElementById('breadcrumb'),
             breadcrumbHome: document.getElementById('breadcrumb').querySelector('.breadcrumb-home'),
             breadcrumbPath: document.getElementById('breadcrumbPath'),
             recentBtn: document.getElementById('recentBtn'),
@@ -209,6 +210,9 @@ const UI = {
 
     /* --- Breadcrumb --- */
     renderBreadcrumb(folderId, currentPath) {
+        // Remove any leftover mode crumbs (recent/favorites/series) from previous views
+        this.els.breadcrumb.querySelectorAll('.breadcrumb-mode').forEach(el => el.remove());
+
         const path = this.els.breadcrumbPath;
         if (!folderId) { path.innerHTML = ''; return; }
 
