@@ -325,6 +325,10 @@ function getDriveDownloadUrl(fileId) {
     return CONFIG.driveDownloadUrl.replace('{id}', fileId);
 }
 
+function getDriveViewUrl(fileId) {
+    return CONFIG.driveViewUrl.replace('{id}', fileId);
+}
+
 /**
  * Get a direct image URL from a Drive thumbnail at the requested size.
  * Drive thumbnails use the =sNNN suffix to control resolution.

@@ -51,6 +51,7 @@ const UI = {
             disclaimerClose: document.getElementById('disclaimerClose'),
 
             refreshBtn: document.getElementById('refreshBtn'),
+            copyAllBtn: document.getElementById('copyAllBtn'),
             lastUpdated: document.getElementById('lastUpdated')
         };
 
@@ -86,6 +87,8 @@ const UI = {
         });
 
         this.els.loadMoreBtn.addEventListener('click', () => App.loadMore());
+
+        this.els.copyAllBtn.addEventListener('click', () => App.copyAllLinks());
 
         this.els.themeToggle.addEventListener('click', () => this.toggleTheme());
         this.els.disclaimerClose.addEventListener('click', () => this.dismissDisclaimer());
@@ -524,6 +527,20 @@ const UI = {
     dismissDisclaimer() {
         this.els.disclaimerBanner.classList.add('dismissed');
         localStorage.setItem(CONFIG.disclaimerKey, 'dismissed');
+    },
+
+    /* --- Toast notifications --- */
+    showToast(message, duration = 2200) {
+        let toast = document.getElementById('toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'toast';
+            document.body.appendChild(toast);
+        }
+        toast.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(this._toastTimer);
+        this._toastTimer = setTimeout(() => toast.classList.remove('show'), duration);
     },
 
     /* --- Scroll to top --- */

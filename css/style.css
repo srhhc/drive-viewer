@@ -1261,6 +1261,32 @@ img { max-width: 100%; }
 .scroll-top.visible { display: flex; }
 .scroll-top:hover { background: var(--accent-hover); transform: scale(1.1); }
 
+/* --- Toast --- */
+#toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--text-primary);
+    color: var(--bg-primary);
+    padding: 10px 18px;
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-shadow: var(--shadow-lg);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition), transform var(--transition);
+    z-index: 200;
+    max-width: 90vw;
+    text-align: center;
+}
+
+#toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
 /* ============================================
    RESPONSIVE — Mobile (max-width: 768px)
    ============================================ */

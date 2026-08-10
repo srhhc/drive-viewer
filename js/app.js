@@ -19,6 +19,7 @@ const App = {
         this._initLightbox();
         this._initHistory();
         this._initDeepLinks();
+        this._initServiceWorker();
 
         UI.showState('loading');
 
@@ -52,6 +53,16 @@ const App = {
                 UI.showState('welcome');
             }
         }
+    },
+
+    /* --- PWA: register service worker for offline support --- */
+    _initServiceWorker() {
+        if (!('serviceWorker' in navigator)) return;
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js').catch((err) => {
+                console.warn('Service worker registration failed:', err);
+            });
+        });
     },
 
     goHome() {
@@ -89,6 +100,29 @@ const App = {
     playFile(file) {
         // Open in player with the current view as the queue
         VideoPlayer.open(file, this.currentDisplayFiles);
+    },
+
+    /* --- Copy all visible links --- */
+    copyAllLinks() {
+        const files = this.currentDisplayFiles || [];
+        if (files.length === 0) {
+            UI.showToast('אין קבצים להעתקה');
+            return;
+        }
+        const lines = files.map(f => getDriveViewUrl(f.id) + '  ' + f.name);
+        const text = lines.join('\n');
+        navigator.clipboard.writeText(text).then(() => {
+            UI.showToast('הועתקו ' + files.length + ' קישורים');
+        }).catch(() => {
+            // Fallback for older browsers
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand('copy'); UI.showToast('הועתקו ' + files.length + ' קישורים'); }
+            catch (e) { UI.showToast('שגיאה בהעתקה'); }
+            document.body.removeChild(ta);
+        });
     },
 
     /* --- Image lightbox --- */
