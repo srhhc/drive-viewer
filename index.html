@@ -100,6 +100,9 @@
                 <button class="recent-btn" id="recentBtn" aria-label="מה חדש באתר" title="מה חדש באתר">
                     <i class="fas fa-bolt"></i> מה חדש?
                 </button>
+                <button class="recent-btn" id="favoritesBtn" aria-label="המועדפים שלי" title="המועדפים שלי">
+                    <i class="fas fa-heart"></i> מועדפים
+                </button>
             </div>
 
             <!-- Toolbar -->
@@ -111,6 +114,9 @@
                         </button>
                         <button class="view-btn" data-view="list" aria-label="תצוגת רשימה">
                             <i class="fas fa-list"></i>
+                        </button>
+                        <button class="view-btn" data-view="series" aria-label="תצוגת סדרות" title="קיבוץ לסדרות">
+                            <i class="fas fa-tv"></i>
                         </button>
                     </div>
                     <div class="type-filter">
@@ -139,11 +145,15 @@
 
             <!-- Content Area -->
             <div class="content-area" id="contentArea">
-                <!-- Welcome / Empty state -->
+                <!-- Welcome / Home dashboard -->
                 <div class="welcome-state" id="welcomeState">
-                    <div class="welcome-icon"><i class="fas fa-film"></i></div>
-                    <h2>ברוכים הבאים לדרייב-צפייה</h2>
-                    <p>בחרו תיקייה מהתפריט או חפשו קובץ.</p>
+                    <div class="home-hero">
+                        <div class="welcome-icon"><i class="fas fa-film"></i></div>
+                        <h2>ברוכים הבאים לדרייב-צפייה</h2>
+                        <p>הכל במקום אחד — חיפוש, סדרות, המשך צפייה ומועדפים.</p>
+                        <div class="home-stats" id="homeStats"></div>
+                    </div>
+                    <div class="home-sections" id="homeSections"></div>
                     <p class="welcome-sub">האתר מציג תכנים מתיקיות Google Drive שיתופיות. אין לנו בעלות או אחריות על התכנים.</p>
                 </div>
 
@@ -174,6 +184,9 @@
 
                 <!-- List view -->
                 <div class="file-list" id="fileList" style="display:none;"></div>
+
+                <!-- Series view -->
+                <div class="series-grid" id="seriesGrid" style="display:none;"></div>
 
                 <!-- Load more -->
                 <div class="load-more-wrap" id="loadMoreWrap" style="display:none;">
@@ -274,6 +287,7 @@
     <script src="js/config.js"></script>
     <script src="js/data.js"></script>
     <script src="js/search.js"></script>
+    <script src="js/series.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/player.js"></script>
     <script src="js/app.js"></script>

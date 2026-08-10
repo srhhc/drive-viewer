@@ -54,6 +54,12 @@ const CONFIG = {
     historyKey: 'drive-viewer-history',
     historyMax: 15,
 
+    // Favorites
+    favoritesKey: 'drive-viewer-favorites',
+
+    // Last visit timestamp (for 'new since last visit')
+    lastVisitKey: 'drive-viewer-last-visit',
+
     // Video extensions to show with video icon
     videoExtensions: [
         'mp4', 'mkv', 'webm', 'avi', 'mov', 'wmv',

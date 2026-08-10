@@ -29,6 +29,7 @@ const UI = {
             breadcrumbHome: document.getElementById('breadcrumb').querySelector('.breadcrumb-home'),
             breadcrumbPath: document.getElementById('breadcrumbPath'),
             recentBtn: document.getElementById('recentBtn'),
+            favoritesBtn: document.getElementById('favoritesBtn'),
 
             resultsCount: document.getElementById('resultsCount'),
             sortSelect: document.getElementById('sortSelect'),
@@ -45,6 +46,7 @@ const UI = {
             errorMessage: document.getElementById('errorMessage'),
             fileGrid: document.getElementById('fileGrid'),
             fileList: document.getElementById('fileList'),
+            seriesGrid: document.getElementById('seriesGrid'),
 
             themeToggle: document.getElementById('themeToggle'),
             disclaimerBanner: document.getElementById('disclaimerBanner'),
@@ -91,6 +93,7 @@ const UI = {
 
         this.els.copyAllBtn.addEventListener('click', () => App.copyAllLinks());
         this.els.playAllBtn.addEventListener('click', () => App.playAll());
+        this.els.favoritesBtn.addEventListener('click', () => App.showFavorites());
 
         this.els.themeToggle.addEventListener('click', () => this.toggleTheme());
         this.els.disclaimerClose.addEventListener('click', () => this.dismissDisclaimer());
@@ -246,6 +249,12 @@ const UI = {
 
         const visible = files.slice(0, this.visibleCount);
 
+        if (this.viewMode === 'series') {
+            this.renderSeries(files);
+            this.els.loadMoreWrap.style.display = 'none';
+            return;
+        }
+
         if (this.viewMode === 'grid') {
             this.renderFileGrid(visible);
         } else {
@@ -260,6 +269,49 @@ const UI = {
             this.els.loadMoreBtn.textContent = 'טען עוד (' + Math.min(remaining, CONFIG.itemsPerPage) + ') — נותרו ' + remaining.toLocaleString();
         }
     },
+
+    /* --- Series View --- */
+    renderSeries(files) {
+        const grid = this.els.seriesGrid;
+        const seriesList = SeriesEngine.groupFiles(files);
+
+        if (seriesList.length === 0) {
+            grid.innerHTML = '<div class="series-empty"><i class="fas fa-tv"></i><p>לא זוהו סדרות בקבצים אלה.</p><p class="series-empty-sub">קבצים עם דפוס כמו "עונה 1 פרק 5" או "S01E05" יקובצו כאן אוטומטית.</p></div>';
+            grid.style.display = 'grid';
+            this.els.resultsCount.textContent = seriesList.length + ' סדרות';
+            return;
+        }
+
+        this.els.resultsCount.textContent = seriesList.length.toLocaleString() + ' סדרות · ' + seriesList.reduce((a, s) => a + s.totalEpisodes, 0).toLocaleString() + ' פרקים';
+
+        grid.innerHTML = seriesList.map(series => {
+            const watched = series.files.filter(f => SeriesEngine.isWatched(f.id)).length;
+            const thumb = series.thumbnail
+                ? '<img src="' + getImageUrl({ thumbnailLink: series.thumbnail }, 320) + '" alt="" loading="lazy">'
+                : '<i class="fas fa-tv"></i>';
+            return '<div class="series-card" data-series="' + this._escapeHtml(series.name) + '">'
+                + '<div class="series-card-thumb">' + thumb + '</div>'
+                + '<div class="series-card-body">'
+                + '<div class="series-card-name" title="' + this._escapeHtml(series.name) + '">' + this._escapeHtml(series.name) + '</div>'
+                + '<div class="series-card-meta">'
+                + '<span><i class="fas fa-layer-group"></i> ' + series.seasonCount + ' עונות</span>'
+                + '<span><i class="fas fa-clapperboard"></i> ' + series.totalEpisodes + ' פרקים</span>'
+                + (watched ? '<span class="series-watched-count"><i class="fas fa-check-circle"></i> ' + watched + ' נצפו</span>' : '')
+                + '</div>'
+                + '<div class="series-card-progress">'
+                + '<div class="progress-bar"><div class="progress-fill" style="width:' + Math.round(watched / series.totalEpisodes * 100) + '%"></div></div>'
+                + '<span>' + Math.round(watched / series.totalEpisodes * 100) + '%</span>'
+                + '</div>'
+                + '</div></div>';
+        }).join('');
+
+        grid.style.display = 'grid';
+
+        grid.querySelectorAll('.series-card').forEach(card => {
+            card.addEventListener('click', () => App.openSeries(card.dataset.series, seriesList));
+        });
+    },
+
 
     /* --- File Grid --- */
     renderFileGrid(files) {
@@ -298,6 +350,14 @@ const UI = {
                 copyBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     this._copyToClipboard(file, copyBtn);
+                });
+            }
+
+            const favBtn = card.querySelector('.btn-fav');
+            if (favBtn) {
+                favBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    App.toggleFavorite(file, favBtn);
                 });
             }
         });
@@ -375,6 +435,7 @@ const UI = {
             + '</div>'
             + '<div class="file-card-actions">'
             + (file.isVideo || file.isAudio ? '<button class="btn-play"><i class="fas fa-' + (file.isVideo ? 'play' : 'music') + '"></i> ' + (file.isVideo ? 'צפה' : 'נגן') + '</button>' : '')
+            + '<button class="btn-fav" data-fav="' + (App.isFavorite(file.id) ? '1' : '0') + '" title="הוסף למועדפים"><i class="fas fa-heart"></i></button>'
             + '<button class="btn-copy" title="העתק קישור"><i class="fas fa-link"></i></button>'
             + '<a class="btn-dl" href="' + getDriveDownloadUrl(file.id) + '" target="_blank" rel="noopener"><i class="fas fa-download"></i> הורד</a>'
             + '</div></div>';
@@ -411,6 +472,14 @@ const UI = {
                     this._copyToClipboard(file, copyBtn);
                 });
             }
+
+            const favBtn = row.querySelector('.btn-fav');
+            if (favBtn) {
+                favBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    App.toggleFavorite(file, favBtn);
+                });
+            }
         });
     },
 
@@ -423,6 +492,7 @@ const UI = {
             + '<span class="file-list-date">' + file.dateFormatted + '</span>'
             + '<div class="file-list-actions">'
             + (file.isVideo || file.isAudio ? '<button class="btn-play"><i class="fas fa-' + (file.isVideo ? 'play' : 'music') + '"></i> ' + (file.isVideo ? 'צפה' : 'נגן') + '</button>' : '')
+            + '<button class="btn-fav" data-fav="' + (App.isFavorite(file.id) ? '1' : '0') + '" title="הוסף למועדפים"><i class="fas fa-heart"></i></button>'
             + '<button class="btn-copy" title="העתק קישור"><i class="fas fa-link"></i></button>'
             + '<a href="' + getDriveDownloadUrl(file.id) + '" target="_blank" rel="noopener"><i class="fas fa-download"></i></a>'
             + '</div></div>';
@@ -442,7 +512,7 @@ const UI = {
 
     /* --- State Visibility --- */
     showState(state) {
-        ['welcomeState','loadingState','emptyState','errorState','fileGrid','fileList'].forEach(id => {
+        ['welcomeState','loadingState','emptyState','errorState','fileGrid','fileList','seriesGrid'].forEach(id => {
             this.els[id].style.display = 'none';
         });
         if (state === 'content') return;
@@ -465,7 +535,7 @@ const UI = {
 
     _loadViewMode() {
         const saved = localStorage.getItem(CONFIG.viewModeKey);
-        if (saved === 'list' || saved === 'grid') this.viewMode = saved;
+        if (saved === 'list' || saved === 'grid' || saved === 'series') this.viewMode = saved;
         this.els.viewBtns.forEach(b => b.classList.toggle('active', b.dataset.view === this.viewMode));
     },
 

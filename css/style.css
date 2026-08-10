@@ -637,6 +637,120 @@ img { max-width: 100%; }
 .welcome-state p { color: var(--text-secondary); max-width: 500px; }
 .welcome-sub { font-size: 0.85rem; color: var(--text-muted) !important; margin-top: 8px; }
 
+/* --- Home Dashboard --- */
+.home-hero { margin-bottom: 8px; }
+
+.home-stats {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 16px;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    box-shadow: var(--shadow-sm);
+}
+.stat-item i { color: var(--accent); }
+
+.home-sections {
+    width: 100%;
+    max-width: var(--max-content-width);
+    margin-top: 24px;
+    text-align: right;
+}
+
+.home-section { margin-bottom: 28px; }
+
+.home-section-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--text-primary);
+}
+.home-section-title i { color: var(--accent); margin-left: 6px; }
+
+.home-section-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+}
+
+.home-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform var(--transition), box-shadow var(--transition);
+}
+.home-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+}
+
+.home-card-thumb {
+    aspect-ratio: 16/9;
+    background: var(--bg-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 2rem;
+    overflow: hidden;
+}
+.home-card-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+.home-card-name {
+    padding: 8px 10px 2px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.home-card-folder {
+    padding: 0 10px 10px;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.home-empty { color: var(--text-muted); text-align: center; padding: 20px; }
+
+/* Favorite heart button */
+.btn-fav { color: var(--text-muted); }
+.btn-fav:hover { color: #e11d48; }
+.btn-fav.fav-active, .btn-fav[data-fav="1"] { color: #e11d48; }
+
+#favoritesBtn {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: all var(--transition);
+    white-space: nowrap;
+}
+#favoritesBtn:hover { background: var(--accent-light); color: var(--accent); }
+#favoritesBtn i { color: #e11d48; }
+
 .loading-state {
     color: var(--text-muted);
     gap: 16px;
@@ -865,6 +979,199 @@ img { max-width: 100%; }
     white-space: nowrap;
 }
 .file-card-path i { font-size: 0.65rem; }
+
+/* ============================================
+   SERIES VIEW
+   ============================================ */
+.series-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+    padding: 16px;
+}
+
+.series-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform var(--transition), box-shadow var(--transition);
+}
+.series-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.series-card-thumb {
+    aspect-ratio: 16/9;
+    background: var(--bg-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 2.5rem;
+    overflow: hidden;
+}
+.series-card-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+.series-card-body { padding: 12px; }
+
+.series-card-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 6px;
+}
+
+.series-card-meta {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+.series-card-meta i { color: var(--accent); margin-left: 3px; }
+.series-watched-count i { color: var(--success); }
+
+.series-card-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+.progress-bar {
+    flex: 1;
+    height: 5px;
+    background: var(--bg-tertiary);
+    border-radius: 99px;
+    overflow: hidden;
+}
+.progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 99px;
+    transition: width 0.3s ease;
+}
+
+.series-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+}
+.series-empty i { font-size: 3rem; color: var(--accent); display: block; margin-bottom: 12px; }
+.series-empty-sub { font-size: 0.8rem; opacity: 0.8; }
+
+/* --- Series detail --- */
+.series-detail { padding: 16px; }
+
+.series-detail-header {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.series-detail-thumb {
+    width: 180px;
+    aspect-ratio: 16/9;
+    flex-shrink: 0;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 3rem;
+    overflow: hidden;
+}
+.series-detail-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+.series-detail-info h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 6px; }
+.series-detail-meta { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 12px; }
+.series-detail-meta i { color: var(--accent); margin-left: 4px; }
+.series-detail-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.series-season { margin-bottom: 20px; }
+
+.series-season-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    padding-right: 4px;
+    border-right: 3px solid var(--accent);
+    padding-right: 10px;
+}
+
+.series-episodes {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.series-episode {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: background var(--transition);
+}
+.series-episode:hover { background: var(--bg-hover); }
+.series-episode[data-watched="1"] .series-ep-name { color: var(--text-muted); text-decoration: line-through; }
+
+.series-ep-watched {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 4px;
+}
+.series-ep-watched .fa-check-circle { color: var(--success); }
+
+.series-ep-num {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-tertiary);
+    border-radius: 50%;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.series-ep-name {
+    flex: 1;
+    font-size: 0.88rem;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.series-ep-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
 
 /* ============================================
    FILE LIST

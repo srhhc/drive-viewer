@@ -14,6 +14,7 @@ const APP_SHELL = [
     './js/config.js',
     './js/data.js',
     './js/search.js',
+    './js/series.js',
     './js/ui.js',
     './js/player.js',
     './js/app.js',
