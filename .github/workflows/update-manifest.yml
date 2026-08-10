@@ -58,8 +58,14 @@ jobs:
             echo "✅ No changes to data files."
           else
             git commit -m "🔄 עדכון יומי — רענון קבצים מ-Google Drive ($(date '+%Y-%m-%d'))"
-            # force-with-lease: safe because data/ is auto-generated and never hand-edited
-            git push --force-with-lease origin main
+            # Rebase onto latest main (data/ is auto-generated, ours wins on conflicts)
+            git fetch origin main
+            git rebase -X ours origin/main || {
+              git rebase --abort
+              echo "Rebase failed; will retry on next run."
+              exit 1
+            }
+            git push origin main
           fi
 
       - name: 🚀 Trigger Pages deployment
