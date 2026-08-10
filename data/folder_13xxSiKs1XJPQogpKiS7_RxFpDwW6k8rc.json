@@ -4,24 +4,27 @@
   "files": [
     {
       "mimeType": "application/vnd.google-apps.document",
-      "thumbnailLink": "https://lh3.googleusercontent.com/drive-storage/AJQWtBPdIH3pxn5eKQimrA-gFKWiH9LxklqqBSlhhYBZWIVSW7AWAQ14JLOY5Gzb5-ns--EVw4QiEEob_t6oN7sTOVB9FPfTSjXAVT6qqoNdMkgSmIl9pO7i3Uahp9PLJ_jj=s220",
+      "thumbnailLink": "https://lh3.googleusercontent.com/drive-storage/AJQWtBOWfjY6Aw9ySjQl6MZl2ECkWTXClSvHT0f_I4q8KXv_HkQcc6nVCqZkT0BChUULbPGn0osPQ-uPPkQmiTLUO7l7faBBvO41efLygiEhnSaPWltoHmi008dD25XJC0w=s220",
       "webViewLink": "https://docs.google.com/document/d/1Lxk_aKM8EtSI3xfFldFCK-0lRorL6tFcV8ZrqIZmmSY/edit?usp=drivesdk",
       "id": "1Lxk_aKM8EtSI3xfFldFCK-0lRorL6tFcV8ZrqIZmmSY",
       "name": "סרטים נריה עטייה",
+      "createdTime": "2020-04-16T14:04:11.413Z",
       "modifiedTime": "2026-02-12T06:35:41.302Z",
-      "path": ""
+      "path": "",
+      "size": 0
     },
     {
       "mimeType": "audio/ogg",
       "webViewLink": "https://drive.google.com/file/d/1_yk8mIIVb5dPu3hOTJDnms-QIHhfpMTQ/view?usp=drivesdk",
       "webContentLink": "https://drive.google.com/uc?id=1_yk8mIIVb5dPu3hOTJDnms-QIHhfpMTQ&export=download",
-      "size": "5901",
+      "size": 5901,
       "id": "1_yk8mIIVb5dPu3hOTJDnms-QIHhfpMTQ",
       "name": "‏קטע קול מאת נריה עטייה",
+      "createdTime": "2021-03-08T19:21:04.884Z",
       "modifiedTime": "2021-03-08T19:21:04.884Z",
       "path": ""
     }
   ],
   "count": 2,
-  "scrapedAt": "2026-08-09T23:43:40.651Z"
+  "scrapedAt": "2026-08-10T00:25:51.042Z"
 }
