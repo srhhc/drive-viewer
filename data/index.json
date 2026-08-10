@@ -2,15 +2,13 @@
   "folders": [
     {
       "id": "1uL6Uxkyva9ixQAIwR9xOHj3Oo5NfamM9",
-      "name": "תיקייה 1uL6Uxkyva9ixQAIwR9xOHj3Oo5NfamM9",
-      "fileCount": 0,
-      "error": "HTTP 404: {\n  \"error\": {\n    \"code\": 404,\n    \"message\": \"File not found: 1uL6Uxkyva9ixQAIwR9xOHj3Oo5NfamM9.\",\n    \"errors\": [\n      {\n        \"message\": \"File not found: 1uL6Uxkyva9ixQAIwR9xOHj3Oo5NfamM9.\",\n  "
+      "name": "VIP🏅",
+      "fileCount": 165
     },
     {
       "id": "1S7s5XJwk2BlrjyPG_AWNOCmm_P-SzcYz",
-      "name": "תיקייה 1S7s5XJwk2BlrjyPG_AWNOCmm_P-SzcYz",
-      "fileCount": 0,
-      "error": "HTTP 404: {\n  \"error\": {\n    \"code\": 404,\n    \"message\": \"File not found: 1S7s5XJwk2BlrjyPG_AWNOCmm_P-SzcYz.\",\n    \"errors\": [\n      {\n        \"message\": \"File not found: 1S7s5XJwk2BlrjyPG_AWNOCmm_P-SzcYz.\",\n  "
+      "name": "VIP🏅",
+      "fileCount": 112
     },
     {
       "id": "1gZXtZ_l_wumXONjZ5AZg0pZihq0c9bZi",
@@ -53,7 +51,7 @@
       "fileCount": 2258
     }
   ],
-  "lastUpdated": "2026-08-10T17:20:02.058Z",
-  "totalFiles": 14679,
+  "lastUpdated": "2026-08-10T17:27:38.498Z",
+  "totalFiles": 14956,
   "generatedBy": "generate-manifest.js"
 }
