@@ -1596,6 +1596,77 @@ img { max-width: 100%; }
 .scroll-top.visible { display: flex; }
 .scroll-top:hover { background: var(--accent-hover); transform: scale(1.1); }
 
+/* ============================================
+   MINI PLAYER
+   ============================================ */
+.mini-player {
+    position: fixed;
+    bottom: 16px;
+    left: 16px;
+    z-index: 150;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: 10px;
+    max-width: min(480px, calc(100vw - 32px));
+    direction: rtl;
+}
+
+.mini-player-frame-wrap {
+    width: 160px;
+    aspect-ratio: 16/9;
+    flex-shrink: 0;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: #000;
+}
+.mini-player-frame-wrap iframe {
+    border: none;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.mini-player-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mini-player-title {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mini-player-counter {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+.mini-player-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+.mini-player-actions .btn-icon { width: 34px; height: 34px; font-size: 0.95rem; }
+.mini-player-actions #miniPlayerClose:hover { color: var(--danger); }
+
+@media (max-width: 480px) {
+    .mini-player { bottom: 8px; left: 8px; right: 8px; max-width: none; padding: 8px; }
+    .mini-player-frame-wrap { width: 110px; }
+    .mini-player-title { font-size: 0.72rem; }
+}
+
 /* --- Toast --- */
 #toast {
     position: fixed;

@@ -5,7 +5,7 @@
    stale-while-revalidate for data files.
    ============================================ */
 
-const CACHE_VERSION = 'drive-viewer-v2';
+const CACHE_VERSION = 'drive-viewer-v3';
 const APP_SHELL = [
     './',
     './index.html',
@@ -84,16 +84,19 @@ self.addEventListener('fetch', (event) => {
             );
             return;
         }
+        // JS/CSS: stale-while-revalidate so code updates propagate on next visit
         event.respondWith(
-            caches.match(event.request).then((cached) => {
-                if (cached) return cached;
-                return fetch(event.request).then((response) => {
-                    if (response && response.ok) {
-                        const clone = response.clone();
-                        caches.open(CACHE_VERSION).then((cache) => cache.put(event.request, clone));
-                    }
-                    return response;
-                });
+            caches.open(CACHE_VERSION).then(async (cache) => {
+                const cached = await cache.match(event.request);
+                const network = fetch(event.request)
+                    .then((response) => {
+                        if (response && response.ok) {
+                            cache.put(event.request, response.clone());
+                        }
+                        return response;
+                    })
+                    .catch(() => cached);
+                return cached || network;
             })
         );
     }
