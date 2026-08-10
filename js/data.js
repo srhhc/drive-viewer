@@ -80,6 +80,7 @@ const DataStore = {
                 // Derived properties
                 extension: getFileExtension(f.name),
                 isVideo: isVideoFile(f.name, f.mimeType),
+                isAudio: isAudioFile(f.name, f.mimeType),
                 sizeFormatted: formatFileSize(size),
                 dateFormatted: formatDate(modifiedTime),
                 icon: getFileIcon(f.name, f.mimeType),
@@ -183,6 +184,12 @@ function isVideoFile(name, mimeType) {
     if (mimeType && mimeType.startsWith('video/')) return true;
     const ext = getFileExtension(name);
     return CONFIG.videoExtensions.includes(ext);
+}
+
+function isAudioFile(name, mimeType) {
+    if (mimeType && mimeType.startsWith('audio/')) return true;
+    const ext = getFileExtension(name);
+    return ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'opus'].includes(ext);
 }
 
 function getFileIcon(name, mimeType) {

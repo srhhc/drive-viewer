@@ -276,7 +276,7 @@ const UI = {
 
             card.addEventListener('click', (e) => {
                 if (e.target.closest('button') || e.target.closest('a')) return;
-                if (file.isVideo) VideoPlayer.open(file);
+                if (file.isVideo || file.isAudio) VideoPlayer.open(file);
                 else window.open(file.webViewLink || getDrivePreviewUrl(file.id), '_blank');
             });
 
@@ -366,7 +366,7 @@ const UI = {
             + '<div class="file-card-meta"><span>' + file.sizeFormatted + '</span><span>' + file.dateFormatted + '</span></div>'
             + '</div>'
             + '<div class="file-card-actions">'
-            + (file.isVideo ? '<button class="btn-play"><i class="fas fa-play"></i> צפה</button>' : '')
+            + (file.isVideo || file.isAudio ? '<button class="btn-play"><i class="fas fa-' + (file.isVideo ? 'play' : 'music') + '"></i> ' + (file.isVideo ? 'צפה' : 'נגן') + '</button>' : '')
             + '<button class="btn-copy" title="העתק קישור"><i class="fas fa-link"></i></button>'
             + '<a class="btn-dl" href="' + getDriveDownloadUrl(file.id) + '" target="_blank" rel="noopener"><i class="fas fa-download"></i> הורד</a>'
             + '</div></div>';
@@ -386,7 +386,7 @@ const UI = {
 
             row.addEventListener('click', (e) => {
                 if (e.target.closest('button') || e.target.closest('a')) return;
-                if (file.isVideo) VideoPlayer.open(file);
+                if (file.isVideo || file.isAudio) VideoPlayer.open(file);
                 else window.open(file.webViewLink || getDrivePreviewUrl(file.id), '_blank');
             });
 
@@ -413,7 +413,7 @@ const UI = {
             + '<span class="file-list-size">' + file.sizeFormatted + '</span>'
             + '<span class="file-list-date">' + file.dateFormatted + '</span>'
             + '<div class="file-list-actions">'
-            + (file.isVideo ? '<button class="btn-play"><i class="fas fa-play"></i> צפה</button>' : '')
+            + (file.isVideo || file.isAudio ? '<button class="btn-play"><i class="fas fa-' + (file.isVideo ? 'play' : 'music') + '"></i> ' + (file.isVideo ? 'צפה' : 'נגן') + '</button>' : '')
             + '<button class="btn-copy" title="העתק קישור"><i class="fas fa-link"></i></button>'
             + '<a href="' + getDriveDownloadUrl(file.id) + '" target="_blank" rel="noopener"><i class="fas fa-download"></i></a>'
             + '</div></div>';

@@ -39,6 +39,17 @@ const VideoPlayer = {
         this.frame.src = getDrivePreviewUrl(file.id);
         this.modal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
+        // Type icon next to title (safe text via textContent)
+        const icon = file.isAudio ? 'fa-music' : 'fa-film';
+        this.title.innerHTML = '';
+        const iconEl = document.createElement('i');
+        iconEl.className = 'fas ' + icon;
+        iconEl.style.marginLeft = '8px';
+        iconEl.style.color = 'var(--accent)';
+        this.title.appendChild(iconEl);
+        const textSpan = document.createElement('span');
+        textSpan.textContent = file.name;
+        this.title.appendChild(textSpan);
     },
 
     close() {
