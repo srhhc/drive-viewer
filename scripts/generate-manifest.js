@@ -192,7 +192,10 @@ async function refreshAccessToken() {
 // --- Scanning ---
 
 async function scanFolder(folderId) {
-    const folderMeta = await apiRequest('/files/' + folderId + '?fields=name');
+    // supportsAllDrives is REQUIRED for folders inside Shared Drives
+    // (אחסון שיתופי) — without it the API returns 404 "File not found"
+    // even when the account has full access.
+    const folderMeta = await apiRequest('/files/' + folderId + '?fields=name&supportsAllDrives=true');
     const folderName = folderMeta.name || folderId;
 
     const allFiles = [];
@@ -220,7 +223,10 @@ async function listFilesRecursive(folderId, currentPath, accumulator, pageToken 
     const indent = '  '.repeat(Math.min(depth, 5));
 
     const query = "'" + folderId + "' in parents and trashed = false";
-    let url = '/files?q=' + encodeURIComponent(query) + '&fields=nextPageToken,files(' + FILE_FIELDS + ')&pageSize=1000&orderBy=name';
+    // includeItemsFromAllDrives + supportsAllDrives + corpora=allDrives are
+    // required to list files inside Shared Drives (אחסון שיתופי).
+    let url = '/files?q=' + encodeURIComponent(query) + '&fields=nextPageToken,files(' + FILE_FIELDS + ')&pageSize=1000&orderBy=name'
+        + '&includeItemsFromAllDrives=true&supportsAllDrives=true&corpora=allDrives';
     if (pageToken) url += '&pageToken=' + pageToken;
 
     const data = await apiRequest(url);
