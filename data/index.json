@@ -28,7 +28,7 @@
     {
       "id": "1DJ39HcL0ATxe9eXsITfSXFVxpWSaRpvy",
       "name": "סדרות בקשות",
-      "fileCount": 1490
+      "fileCount": 1495
     },
     {
       "id": "1CJK_zaSdbiMgybBvkYjxlt61oM4lXB_b",
@@ -53,10 +53,10 @@
     {
       "id": "1f3_cLmT7aS5zihvlxJpbCodgwFK43jEn",
       "name": "תיקיית העתקות מהתוסף",
-      "fileCount": 1885
+      "fileCount": 2089
     }
   ],
-  "lastUpdated": "2026-08-20T08:07:47.879Z",
-  "totalFiles": 12527,
+  "lastUpdated": "2026-08-21T08:08:22.737Z",
+  "totalFiles": 12736,
   "generatedBy": "generate-manifest.js"
 }
