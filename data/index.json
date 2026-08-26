@@ -7,9 +7,8 @@
     },
     {
       "id": "1S7s5XJwk2BlrjyPG_AWNOCmm_P-SzcYz",
-      "name": "תיקייה 1S7s5XJwk2BlrjyPG_AWNOCmm_P-SzcYz",
-      "fileCount": 0,
-      "error": "HTTP 404: {\n  \"error\": {\n    \"code\": 404,\n    \"message\": \"File not found: 1S7s5XJwk2BlrjyPG_AWNOCmm_P-SzcYz.\",\n    \"errors\": [\n      {\n        \"message\": \"File not found: 1S7s5XJwk2BlrjyPG_AWNOCmm_P-SzcYz.\",\n  "
+      "name": "VIP🏅",
+      "fileCount": 124
     },
     {
       "id": "1gZXtZ_l_wumXONjZ5AZg0pZihq0c9bZi",
@@ -29,7 +28,7 @@
     {
       "id": "1DJ39HcL0ATxe9eXsITfSXFVxpWSaRpvy",
       "name": "סדרות בקשות",
-      "fileCount": 1575
+      "fileCount": 1585
     },
     {
       "id": "1CJK_zaSdbiMgybBvkYjxlt61oM4lXB_b",
@@ -57,7 +56,7 @@
       "fileCount": 2089
     }
   ],
-  "lastUpdated": "2026-08-25T08:12:44.910Z",
-  "totalFiles": 12704,
+  "lastUpdated": "2026-08-26T08:13:13.004Z",
+  "totalFiles": 12838,
   "generatedBy": "generate-manifest.js"
 }
