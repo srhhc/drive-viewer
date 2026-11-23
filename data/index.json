@@ -28,7 +28,7 @@
     {
       "id": "1DJ39HcL0ATxe9eXsITfSXFVxpWSaRpvy",
       "name": "סדרות בקשות",
-      "fileCount": 2300
+      "fileCount": 2362
     },
     {
       "id": "1CJK_zaSdbiMgybBvkYjxlt61oM4lXB_b",
@@ -56,7 +56,7 @@
       "fileCount": 4277
     }
   ],
-  "lastUpdated": "2026-11-22T13:44:09.134Z",
-  "totalFiles": 15547,
+  "lastUpdated": "2026-11-23T16:39:35.239Z",
+  "totalFiles": 15609,
   "generatedBy": "generate-manifest.js"
 }
